@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V14</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V15</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -47,14 +47,14 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V14</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V15</h1>
 <div class="sub">今日の売れ筋を取得 → 穴場候補10件を選定 → 投稿文作成 → 順番に投稿</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V14の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V15の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 
 <section class="panel">
@@ -63,7 +63,23 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <div><label>楽天 Application ID</label><input id="appId" placeholder="楽天Web ServiceのApplication ID"></div>
 <div><label>楽天 Access Key</label><input id="accessKey" type="password" placeholder="Access Key"></div>
 <div><label>Affiliate ID（任意）</label><input id="affiliateId" placeholder="使う場合だけ"></div>
-<div><label>ジャンルID（任意）</label><input id="genreId" placeholder="空欄＝楽天市場全体"></div>
+<div><label>ジャンル</label><select id="genreId">
+<option value="">全ジャンル</option>
+<option value="562637">家電</option>
+<option value="558944">キッチン用品</option>
+<option value="215783">日用品雑貨・文房具・手芸</option>
+<option value="100939">美容・コスメ・香水</option>
+<option value="100371">レディースファッション</option>
+<option value="551177">メンズファッション</option>
+<option value="101213">ペット・ペットグッズ</option>
+<option value="101070">スポーツ・アウトドア</option>
+<option value="100804">インテリア・寝具・収納</option>
+<option value="100227">食品</option>
+<option value="551167">スイーツ・お菓子</option>
+<option value="100533">キッズ・ベビー・マタニティ</option>
+<option value="101164">おもちゃ</option>
+<option value="564500">スマートフォン・タブレット</option>
+</select></div>
 <div><label>ランキング</label><select id="period"><option value="">デイリー</option><option value="realtime">リアルタイム</option></select></div>
 <div><label>候補を調べるページ数</label><select id="pages"><option value="2">60件前後</option><option value="3" selected>90件前後</option><option value="4">120件前後</option></select></div>
 <div><label>最低価格</label><input id="minPrice" type="number" value="800"></div>
@@ -75,7 +91,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V14は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V15は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -117,7 +133,7 @@ function makeCopy(x){const name=cleanName(x.itemName);const [cat,pain,tags]=infe
 function imageUrl(x){const a=x.mediumImageUrls||x.smallImageUrls||[];if(!a.length)return '';const v=a[0];return typeof v==='string'?v:(v?.imageUrl||v?.url||'')}
 function directUrl(x){return x.affiliateUrl||x.itemUrl||''}
 async function testConnection(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:'1',elements:'rank,itemName,itemPrice,itemUrl,reviewCount,reviewAverage,availability,mediumImageUrls,itemCode'});const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();status('API接続テスト中…');try{const r=await callRakuten(url);const items=itemArray(r.data);status(`✅ API接続成功（${r.method}）\n${items.length}件取得できました。続けて「今日の10件を作る」を押してください。`)}catch(e){status('❌ API接続失敗\n'+e.message)}}
-async function research(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}saveSettings();const pages=Number(document.getElementById('pages').value||3),genre=document.getElementById('genreId').value.trim(),period=document.getElementById('period').value,affiliate=document.getElementById('affiliateId').value.trim(),min=Number(document.getElementById('minPrice').value||0),max=Number(document.getElementById('maxPrice').value||99999999);status('楽天ランキングを取得しています…');document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';try{let all=[];for(let p=1;p<=pages;p++){const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:String(p)});if(genre)q.set('genreId',genre);if(period)q.set('period',period);if(affiliate)q.set('affiliateId',affiliate);const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();const result=await callRakuten(url),data=result.data;if(data?.error)throw new Error(data.error_description||data.error);const got=itemArray(data);all=all.concat(got);status(`ランキング取得中… ${p} / ${pages}ページ（${result.method} / ${got.length}件）`);await new Promise(r=>setTimeout(r,1300))}const map=new Map();all.forEach(x=>{if(x.itemCode&&!map.has(x.itemCode))map.set(x.itemCode,x)});let arr=[...map.values()].filter(x=>{const price=Number(x.itemPrice||0);return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1});arr.forEach(x=>x._score=opportunityScore(x));arr.sort((a,b)=>b._score-a._score||Number(a.rank||999)-Number(b.rank||999));candidates=arr.slice(0,10);if(!candidates.length)throw new Error('条件に合う商品がありませんでした。価格条件やジャンルIDを見直してください。');localStorage.setItem(DONE,'[]');render();status(`完了：${all.length}件を確認し、穴場候補10件を作りました。`)}catch(e){console.error(e);status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。APIテストが成功している場合は、このエラー内容をそのまま教えてください。');document.getElementById('results').innerHTML='<div class="empty">取得に失敗しました。</div>'}}
+async function research(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}saveSettings();const pages=Number(document.getElementById('pages').value||3),genre=document.getElementById('genreId').value.trim(),period=document.getElementById('period').value,affiliate=document.getElementById('affiliateId').value.trim(),min=Number(document.getElementById('minPrice').value||0),max=Number(document.getElementById('maxPrice').value||99999999);status('楽天ランキングを取得しています…');document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';try{let all=[];for(let p=1;p<=pages;p++){const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:String(p)});if(genre)q.set('genreId',genre);if(period)q.set('period',period);if(affiliate)q.set('affiliateId',affiliate);const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();const result=await callRakuten(url),data=result.data;if(data?.error)throw new Error(data.error_description||data.error);const got=itemArray(data);all=all.concat(got);status(`ランキング取得中… ${p} / ${pages}ページ（${result.method} / ${got.length}件）`);await new Promise(r=>setTimeout(r,1300))}const map=new Map();all.forEach(x=>{if(x.itemCode&&!map.has(x.itemCode))map.set(x.itemCode,x)});let arr=[...map.values()].filter(x=>{const price=Number(x.itemPrice||0);return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1});arr.forEach(x=>x._score=opportunityScore(x));arr.sort((a,b)=>b._score-a._score||Number(a.rank||999)-Number(b.rank||999));candidates=arr.slice(0,10);if(!candidates.length)throw new Error('条件に合う商品がありませんでした。価格条件やジャンルを見直してください。');localStorage.setItem(DONE,'[]');render();status(`完了：${all.length}件を確認し、穴場候補10件を作りました。`)}catch(e){console.error(e);status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。APIテストが成功している場合は、このエラー内容をそのまま教えてください。');document.getElementById('results').innerHTML='<div class="empty">取得に失敗しました。</div>'}}
 function render(){
   const root=document.getElementById('results');
   root.innerHTML='';
