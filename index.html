@@ -1,10 +1,9 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V11</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V12</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -48,14 +47,14 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V11</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V12</h1>
 <div class="sub">今日の売れ筋を取得 → 穴場候補10件を選定 → 投稿文作成 → 順番に投稿</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V11の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V12の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 
 <section class="panel">
@@ -72,10 +71,11 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 </div>
 <div class="actions">
 <button class="gray" onclick="saveSettings()">設定をこのPCに保存</button>
+<button class="blue" onclick="testConnection()">API接続テスト</button>
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V11は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V12は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -100,229 +100,32 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 const SETTINGS='roomV11Settings';
 const DONE='roomV11Done';
 let candidates=[];
-
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function yen(n){return Number(n||0).toLocaleString('ja-JP')+'円'}
-
-function loadSettings(){
-  try{
-    const s=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
-    ['appId','accessKey','affiliateId','genreId','period','pages','minPrice','maxPrice'].forEach(k=>{if(s[k]!==undefined)document.getElementById(k).value=s[k]})
-  }catch(e){}
-}
-function saveSettings(){
-  const s={};
-  ['appId','accessKey','affiliateId','genreId','period','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);
-  localStorage.setItem(SETTINGS,JSON.stringify(s));
-  status('設定をこのPCのブラウザに保存しました。');
-}
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS)||'{}');['appId','accessKey','affiliateId','genreId','period','pages','minPrice','maxPrice'].forEach(k=>{if(s[k]!==undefined)document.getElementById(k).value=s[k]})}catch(e){}}
+function saveSettings(){const s={};['appId','accessKey','affiliateId','genreId','period','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);localStorage.setItem(SETTINGS,JSON.stringify(s));status('設定をこのPCのブラウザに保存しました。')}
 function status(t){document.getElementById('mainStatus').textContent=t}
-
-function jsonp(url){
-  return new Promise((resolve,reject)=>{
-    const cb='rrcb_'+Date.now()+'_'+Math.floor(Math.random()*99999);
-    const script=document.createElement('script');
-    const timer=setTimeout(()=>{cleanup();reject(new Error('API応答がタイムアウトしました'))},15000);
-    function cleanup(){clearTimeout(timer);try{delete window[cb]}catch(e){};script.remove()}
-    window[cb]=(data)=>{cleanup();resolve(data)};
-    script.onerror=()=>{cleanup();reject(new Error('楽天APIを読み込めませんでした'))};
-    script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(cb);
-    document.head.appendChild(script);
-  })
-}
-
-function itemArray(data){
-  let arr=data?.items||data?.Items||[];
-  return arr.map(x=>x?.item||x?.Item||x).filter(Boolean);
-}
-
-function opportunityScore(x){
-  const rank=Number(x.rank||999);
-  const reviews=Number(x.reviewCount||0);
-  const avg=Number(x.reviewAverage||0);
-  const price=Number(x.itemPrice||0);
-  const aff=Number(x.affiliateRate||0);
-  let s=0;
-  s += Math.max(0, 55-(rank*0.55));
-  if(reviews<=5)s+=38;
-  else if(reviews<=20)s+=34;
-  else if(reviews<=50)s+=30;
-  else if(reviews<=100)s+=26;
-  else if(reviews<=300)s+=20;
-  else if(reviews<=800)s+=12;
-  else if(reviews<=2000)s+=6;
-  if(price>=1000&&price<=5000)s+=15;
-  else if(price>5000&&price<=10000)s+=11;
-  else if(price>10000&&price<=20000)s+=7;
-  else if(price<1000)s+=6;
-  if(avg>=4.3)s+=6; else if(avg>=4)s+=4;
-  if(Number(x.availability??1)===1)s+=4;
-  if((x.mediumImageUrls||[]).length)s+=3;
-  s+=Math.min(8,aff*1.5);
-  return Math.round(s);
-}
-
-function cleanName(name){
-  return String(name||'').replace(/【[^】]*】/g,' ').replace(/[＼／]/g,' ').replace(/\s+/g,' ').trim().slice(0,72);
-}
-function infer(name){
-  const n=name;
-  if(/掃除|クリーナ|ブラシ|モップ|洗剤/.test(n))return ['掃除','気になる場所をサッと整えたい人に','#掃除グッズ #家事ラク #時短家事 #便利グッズ'];
-  if(/収納|ラック|ケース|チェスト|ハンガ|米びつ/.test(n))return ['収納','ごちゃつきやすい場所をスッキリさせたい人に','#収納 #整理収納 #収納アイデア #暮らしを整える'];
-  if(/加湿|暖房|毛布|布団|ヒータ/.test(n))return ['秋冬','これからの季節のおうち時間を快適にしたい人に','#秋冬支度 #冬支度 #おうち時間 #あったかグッズ'];
-  if(/キッチン|フライパン|鍋|保存|食洗|調理|包丁|まな板/.test(n))return ['キッチン','毎日のキッチン作業を少しラクにしたい人に','#キッチングッズ #自炊生活 #家事ラク #便利グッズ'];
-  if(/バッグ|リュック|財布|スニーカー|靴|服|シャツ/.test(n))return ['ファッション','普段使いしやすいアイテムを探している人に','#ファッション #お出かけ #買い物 #楽天ROOM'];
-  if(/ドライヤ|美容|化粧|コスメ|シャンプ|ヘア/.test(n))return ['美容','毎日のケア用品を見直したい人に','#美容 #美容グッズ #おうち美容 #自分磨き'];
-  if(/スマホ|イヤホン|PC|充電|モバイル|家電/.test(n))return ['ガジェット','普段使いの便利さを上げたい人に','#家電 #ガジェット #便利アイテム #暮らし'];
-  return ['暮らし','毎日の暮らしに取り入れやすいものを探している人に','#楽天ROOM #便利グッズ #暮らしを整える #買ってよかった'];
-}
-function makeCopy(x){
-  const name=cleanName(x.itemName);
-  const [cat,pain,tags]=infer(name);
-  const reviews=Number(x.reviewCount||0);
-  let hook='【ランキング上位で気になったアイテム👀✨】';
-  if(reviews<=20)hook='【売れ筋なのにレビュー少なめ。今チェックしたい👀✨】';
-  else if(reviews<=100)hook='【ランキング上位×まだレビュー控えめで気になる👀】';
-  const price=yen(x.itemPrice);
-  return `${hook}
-${name}
-
-${pain}良さそう◎
-現在の表示価格は${price}。サイズ・在庫・送料・仕様は商品ページで確認して選びたいアイテムです。
-
-${tags} #楽天市場 #楽天ROOMに載せてます #お買い物マラソン #楽天購入品`;
-}
-
-function imageUrl(x){
-  const a=x.mediumImageUrls||x.smallImageUrls||[];
-  if(!a.length)return '';
-  const v=a[0];
-  return typeof v==='string'?v:(v?.imageUrl||v?.url||'');
-}
-function directUrl(x){
-  return x.affiliateUrl||x.itemUrl||'';
-}
-
-async function research(){
-  const app=document.getElementById('appId').value.trim();
-  const key=document.getElementById('accessKey').value.trim();
-  if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}
-  saveSettings();
-  const pages=Number(document.getElementById('pages').value||3);
-  const genre=document.getElementById('genreId').value.trim();
-  const period=document.getElementById('period').value;
-  const affiliate=document.getElementById('affiliateId').value.trim();
-  const min=Number(document.getElementById('minPrice').value||0);
-  const max=Number(document.getElementById('maxPrice').value||99999999);
-  status('楽天ランキングを取得しています…');
-  document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';
-  try{
-    let all=[];
-    for(let p=1;p<=pages;p++){
-      const q=new URLSearchParams({
-        applicationId:app,accessKey:key,format:'json',formatVersion:'2',page:String(p)
-      });
-      if(genre)q.set('genreId',genre);
-      if(period)q.set('period',period);
-      if(affiliate)q.set('affiliateId',affiliate);
-      const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();
-      const data=await jsonp(url);
-      if(data?.error)throw new Error(data.error_description||data.error);
-      all=all.concat(itemArray(data));
-      status(`ランキングを取得中… ${p} / ${pages} ページ`);
-      await new Promise(r=>setTimeout(r,500));
-    }
-    const map=new Map();
-    all.forEach(x=>{if(x.itemCode&&!map.has(x.itemCode))map.set(x.itemCode,x)});
-    let arr=[...map.values()].filter(x=>{
-      const price=Number(x.itemPrice||0);
-      return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1;
-    });
-    arr.forEach(x=>x._score=opportunityScore(x));
-    arr.sort((a,b)=>b._score-a._score || Number(a.rank||999)-Number(b.rank||999));
-    candidates=arr.slice(0,10);
-    if(!candidates.length)throw new Error('条件に合う商品がありませんでした。価格条件やジャンルIDを見直してください。');
-    localStorage.setItem(DONE,'[]');
-    render();
-    status(`完了：${all.length}件を確認し、穴場候補10件を作りました。`);
-  }catch(e){
-    console.error(e);
-    status('取得できませんでした：'+e.message+'\nApplication ID / Access Key、API利用設定、入力条件を確認してください。');
-    document.getElementById('results').innerHTML='<div class="empty">取得に失敗しました。</div>';
-  }
-}
-
-function render(){
-  const root=document.getElementById('results');
-  root.innerHTML='';
-  candidates.forEach((x,i)=>{
-    const rank=i+1;
-    const img=imageUrl(x);
-    const copy=makeCopy(x);
-    const el=document.createElement('article');
-    el.className='card';el.id='card-'+rank;
-    el.innerHTML=`
-      <div class="top">
-        <div class="rank">${rank}位</div>
-        ${img?`<img class="thumb" src="${esc(img)}" referrerpolicy="no-referrer">`:''}
-        <div class="meta">
-          <h3>${esc(cleanName(x.itemName))}</h3>
-          <div class="chips">
-            <span class="chip score">穴場スコア ${x._score}</span>
-            <span class="chip">市場ランキング ${esc(x.rank||'-')}位</span>
-            <span class="chip">レビュー ${esc(x.reviewCount??0)}件</span>
-            <span class="chip">${yen(x.itemPrice)}</span>
-          </div>
-        </div>
-      </div>
-      <textarea id="copy-${rank}" readonly>${esc(copy)}</textarea>
-      <div class="actions">
-        <button class="primary" onclick="prepare(${rank},${JSON.stringify(directUrl(x))})">投稿準備</button>
-        <button class="gray" onclick="copyOnly(${rank})">文章コピー</button>
-        <button class="green" onclick="toggleDone(${rank})">投稿済みにする</button>
-        <button onclick="goNext(${rank})">次へ ↓</button>
-      </div>
-      <div class="cardstatus" id="cardstatus-${rank}"></div>`;
-    root.appendChild(el);
-  });
-  document.getElementById('progress').style.display='block';
-  updateProgress();
-}
-
-async function copyText(rank){
- const ta=document.getElementById('copy-'+rank);
- try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(ta.value);return true}}catch(e){}
- try{ta.focus();ta.select();ta.setSelectionRange(0,99999);return document.execCommand('copy')}catch(e){return false}
-}
-async function prepare(rank,url){
-  const ok=await copyText(rank);
-  document.getElementById('cardstatus-'+rank).textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。必要なら文章をCtrl+Cしてください。';
-  window.open(url,'_blank','noopener');
-}
-async function copyOnly(rank){
- const ok=await copyText(rank);
- document.getElementById('cardstatus-'+rank).textContent=ok?'✅ コピーしました。':'コピーできませんでした。Ctrl+Cでコピーしてください。';
-}
+function redactUrl(url){try{const u=new URL(url);if(u.searchParams.has('accessKey'))u.searchParams.set('accessKey','***');if(u.searchParams.has('applicationId'))u.searchParams.set('applicationId',u.searchParams.get('applicationId').slice(0,8)+'…');return u.toString()}catch(e){return '(URL解析不可)'}}
+async function fetchApi(url){const res=await fetch(url,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});const raw=await res.text();let data=null;try{data=JSON.parse(raw)}catch(e){}if(!res.ok){const msg=data?.error_description||data?.error||raw.slice(0,300)||('HTTP '+res.status);throw new Error('HTTP '+res.status+'：'+msg)}if(!data)throw new Error('楽天APIの応答をJSONとして解析できませんでした。');return data}
+function jsonp(url){return new Promise((resolve,reject)=>{const cb='rrcb_'+Date.now()+'_'+Math.floor(Math.random()*99999);const script=document.createElement('script');let called=false;const timer=setTimeout(()=>{cleanup();reject(new Error('JSONPが15秒以内に応答しませんでした'))},15000);function cleanup(){clearTimeout(timer);try{delete window[cb]}catch(e){};script.remove()}window[cb]=(data)=>{called=true;cleanup();resolve(data)};script.onload=()=>{if(!called){setTimeout(()=>{if(!called){cleanup();reject(new Error('JSONPスクリプトは読み込めましたが、callbackが実行されませんでした'))}},100)}};script.onerror=()=>{cleanup();reject(new Error('JSONPスクリプトの読み込みに失敗しました（403/許可サイト/CSP等の可能性）'))};script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(cb);document.head.appendChild(script)})}
+async function callRakuten(url){let fetchErr='';try{const data=await fetchApi(url);return {data,method:'fetch'}}catch(e){fetchErr=e.message||String(e)}try{const data=await jsonp(url);return {data,method:'jsonp',fetchErr}}catch(e){throw new Error('fetch: '+fetchErr+' / JSONP: '+(e.message||e)+' / URL: '+redactUrl(url))}}
+function itemArray(data){let arr=data?.items||data?.Items||[];return arr.map(x=>x?.item||x?.Item||x).filter(Boolean)}
+function opportunityScore(x){const rank=Number(x.rank||999),reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0),aff=Number(x.affiliateRate||0);let s=0;s+=Math.max(0,55-(rank*.55));if(reviews<=5)s+=38;else if(reviews<=20)s+=34;else if(reviews<=50)s+=30;else if(reviews<=100)s+=26;else if(reviews<=300)s+=20;else if(reviews<=800)s+=12;else if(reviews<=2000)s+=6;if(price>=1000&&price<=5000)s+=15;else if(price>5000&&price<=10000)s+=11;else if(price>10000&&price<=20000)s+=7;else if(price<1000)s+=6;if(avg>=4.3)s+=6;else if(avg>=4)s+=4;if(Number(x.availability??1)===1)s+=4;if((x.mediumImageUrls||[]).length)s+=3;s+=Math.min(8,aff*1.5);return Math.round(s)}
+function cleanName(name){return String(name||'').replace(/【[^】]*】/g,' ').replace(/[＼／]/g,' ').replace(/\s+/g,' ').trim().slice(0,72)}
+function infer(name){const n=name;if(/掃除|クリーナ|ブラシ|モップ|洗剤/.test(n))return ['掃除','気になる場所をサッと整えたい人に','#掃除グッズ #家事ラク #時短家事 #便利グッズ'];if(/収納|ラック|ケース|チェスト|ハンガ|米びつ/.test(n))return ['収納','ごちゃつきやすい場所をスッキリさせたい人に','#収納 #整理収納 #収納アイデア #暮らしを整える'];if(/加湿|暖房|毛布|布団|ヒータ/.test(n))return ['秋冬','これからの季節のおうち時間を快適にしたい人に','#秋冬支度 #冬支度 #おうち時間 #あったかグッズ'];if(/キッチン|フライパン|鍋|保存|食洗|調理|包丁|まな板/.test(n))return ['キッチン','毎日のキッチン作業を少しラクにしたい人に','#キッチングッズ #自炊生活 #家事ラク #便利グッズ'];if(/バッグ|リュック|財布|スニーカー|靴|服|シャツ/.test(n))return ['ファッション','普段使いしやすいアイテムを探している人に','#ファッション #お出かけ #買い物 #楽天ROOM'];if(/ドライヤ|美容|化粧|コスメ|シャンプ|ヘア/.test(n))return ['美容','毎日のケア用品を見直したい人に','#美容 #美容グッズ #おうち美容 #自分磨き'];if(/スマホ|イヤホン|PC|充電|モバイル|家電/.test(n))return ['ガジェット','普段使いの便利さを上げたい人に','#家電 #ガジェット #便利アイテム #暮らし'];return ['暮らし','毎日の暮らしに取り入れやすいものを探している人に','#楽天ROOM #便利グッズ #暮らしを整える #買ってよかった']}
+function makeCopy(x){const name=cleanName(x.itemName);const [cat,pain,tags]=infer(name);const reviews=Number(x.reviewCount||0);let hook='【ランキング上位で気になったアイテム👀✨】';if(reviews<=20)hook='【売れ筋なのにレビュー少なめ。今チェックしたい👀✨】';else if(reviews<=100)hook='【ランキング上位×まだレビュー控えめで気になる👀】';const price=yen(x.itemPrice);return `${hook}\n${name}\n\n${pain}良さそう◎\n現在の表示価格は${price}。サイズ・在庫・送料・仕様は商品ページで確認して選びたいアイテムです。\n\n${tags} #楽天市場 #楽天ROOMに載せてます #お買い物マラソン #楽天購入品`}
+function imageUrl(x){const a=x.mediumImageUrls||x.smallImageUrls||[];if(!a.length)return '';const v=a[0];return typeof v==='string'?v:(v?.imageUrl||v?.url||'')}
+function directUrl(x){return x.affiliateUrl||x.itemUrl||''}
+async function testConnection(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:'1',elements:'rank,itemName,itemPrice,itemUrl,reviewCount,reviewAverage,availability,mediumImageUrls,itemCode'});const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();status('API接続テスト中…');try{const r=await callRakuten(url);const items=itemArray(r.data);status(`✅ API接続成功（${r.method}）\n${items.length}件取得できました。続けて「今日の10件を作る」を押してください。`)}catch(e){status('❌ API接続失敗\n'+e.message)}}
+async function research(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}saveSettings();const pages=Number(document.getElementById('pages').value||3),genre=document.getElementById('genreId').value.trim(),period=document.getElementById('period').value,affiliate=document.getElementById('affiliateId').value.trim(),min=Number(document.getElementById('minPrice').value||0),max=Number(document.getElementById('maxPrice').value||99999999);status('楽天ランキングを取得しています…');document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';try{let all=[];for(let p=1;p<=pages;p++){const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:String(p)});if(genre)q.set('genreId',genre);if(period)q.set('period',period);if(affiliate)q.set('affiliateId',affiliate);const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();const result=await callRakuten(url),data=result.data;if(data?.error)throw new Error(data.error_description||data.error);const got=itemArray(data);all=all.concat(got);status(`ランキング取得中… ${p} / ${pages}ページ（${result.method} / ${got.length}件）`);await new Promise(r=>setTimeout(r,1300))}const map=new Map();all.forEach(x=>{if(x.itemCode&&!map.has(x.itemCode))map.set(x.itemCode,x)});let arr=[...map.values()].filter(x=>{const price=Number(x.itemPrice||0);return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1});arr.forEach(x=>x._score=opportunityScore(x));arr.sort((a,b)=>b._score-a._score||Number(a.rank||999)-Number(b.rank||999));candidates=arr.slice(0,10);if(!candidates.length)throw new Error('条件に合う商品がありませんでした。価格条件やジャンルIDを見直してください。');localStorage.setItem(DONE,'[]');render();status(`完了：${all.length}件を確認し、穴場候補10件を作りました。`)}catch(e){console.error(e);status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。APIテストが成功している場合は、このエラー内容をそのまま教えてください。');document.getElementById('results').innerHTML='<div class="empty">取得に失敗しました。</div>'}}
+function render(){const root=document.getElementById('results');root.innerHTML='';candidates.forEach((x,i)=>{const rank=i+1,img=imageUrl(x),copy=makeCopy(x),el=document.createElement('article');el.className='card';el.id='card-'+rank;el.innerHTML=`<div class="top"><div class="rank">${rank}位</div>${img?`<img class="thumb" src="${esc(img)}" referrerpolicy="no-referrer">`:''}<div class="meta"><h3>${esc(cleanName(x.itemName))}</h3><div class="chips"><span class="chip score">穴場スコア ${x._score}</span><span class="chip">市場ランキング ${esc(x.rank||'-')}位</span><span class="chip">レビュー ${esc(x.reviewCount??0)}件</span><span class="chip">${yen(x.itemPrice)}</span></div></div></div><textarea id="copy-${rank}" readonly>${esc(copy)}</textarea><div class="actions"><button class="primary" onclick="prepare(${rank},${JSON.stringify(directUrl(x))})">投稿準備</button><button class="gray" onclick="copyOnly(${rank})">文章コピー</button><button class="green" onclick="toggleDone(${rank})">投稿済みにする</button><button onclick="goNext(${rank})">次へ ↓</button></div><div class="cardstatus" id="cardstatus-${rank}"></div>`;root.appendChild(el)});document.getElementById('progress').style.display='block';updateProgress()}
+async function copyText(rank){const ta=document.getElementById('copy-'+rank);try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(ta.value);return true}}catch(e){}try{ta.focus();ta.select();ta.setSelectionRange(0,99999);return document.execCommand('copy')}catch(e){return false}}
+async function prepare(rank,url){const ok=await copyText(rank);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。必要なら文章をCtrl+Cしてください。';window.open(url,'_blank','noopener')}
+async function copyOnly(rank){const ok=await copyText(rank);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ コピーしました。':'コピーできませんでした。Ctrl+Cでコピーしてください。'}
 function doneList(){try{return JSON.parse(localStorage.getItem(DONE)||'[]')}catch(e){return[]}}
-function toggleDone(rank){
- let d=doneList(); d=d.includes(rank)?d.filter(x=>x!==rank):[...d,rank]; localStorage.setItem(DONE,JSON.stringify(d)); updateProgress();
-}
-function updateProgress(){
- const d=doneList();
- for(let i=1;i<=10;i++){const c=document.getElementById('card-'+i);if(c)c.classList.toggle('done',d.includes(i))}
- const n=d.length,p=Math.round(n/10*100);
- document.getElementById('progressText').textContent=`${n} / 10 投稿済み`;
- document.getElementById('progressPct').textContent=p+'%';
- document.getElementById('progressBar').style.width=p+'%';
-}
-function goNext(rank){
- const d=doneList();let n=null;
- for(let i=rank+1;i<=10;i++)if(!d.includes(i)){n=i;break}
- if(!n)for(let i=1;i<=10;i++)if(!d.includes(i)){n=i;break}
- if(n)document.getElementById('card-'+n)?.scrollIntoView({behavior:'smooth',block:'center'});
- else alert('10件すべて投稿済みです！');
-}
-
+function toggleDone(rank){let d=doneList();d=d.includes(rank)?d.filter(x=>x!==rank):[...d,rank];localStorage.setItem(DONE,JSON.stringify(d));updateProgress()}
+function updateProgress(){const d=doneList();for(let i=1;i<=10;i++){const c=document.getElementById('card-'+i);if(c)c.classList.toggle('done',d.includes(i))}const n=d.length,p=Math.round(n/10*100);document.getElementById('progressText').textContent=`${n} / 10 投稿済み`;document.getElementById('progressPct').textContent=p+'%';document.getElementById('progressBar').style.width=p+'%'}
+function goNext(rank){const d=doneList();let n=null;for(let i=rank+1;i<=10;i++)if(!d.includes(i)){n=i;break}if(!n)for(let i=1;i<=10;i++)if(!d.includes(i)){n=i;break}if(n)document.getElementById('card-'+n)?.scrollIntoView({behavior:'smooth',block:'center'});else alert('10件すべて投稿済みです！')}
 loadSettings();
 </script>
 </body>
