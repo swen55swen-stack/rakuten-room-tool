@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V12</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V13</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:auto}
 body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI","Yu Gothic UI",sans-serif;color:#222}
 header{background:linear-gradient(135deg,var(--red),var(--pink));color:#fff;padding:20px 16px}
 .wrap{max-width:1050px;margin:auto}
@@ -47,14 +47,14 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V12</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V13</h1>
 <div class="sub">今日の売れ筋を取得 → 穴場候補10件を選定 → 投稿文作成 → 順番に投稿</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V12の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V13の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 
 <section class="panel">
@@ -75,7 +75,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V12は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V13は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -119,9 +119,9 @@ function directUrl(x){return x.affiliateUrl||x.itemUrl||''}
 async function testConnection(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:'1',elements:'rank,itemName,itemPrice,itemUrl,reviewCount,reviewAverage,availability,mediumImageUrls,itemCode'});const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();status('API接続テスト中…');try{const r=await callRakuten(url);const items=itemArray(r.data);status(`✅ API接続成功（${r.method}）\n${items.length}件取得できました。続けて「今日の10件を作る」を押してください。`)}catch(e){status('❌ API接続失敗\n'+e.message)}}
 async function research(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}saveSettings();const pages=Number(document.getElementById('pages').value||3),genre=document.getElementById('genreId').value.trim(),period=document.getElementById('period').value,affiliate=document.getElementById('affiliateId').value.trim(),min=Number(document.getElementById('minPrice').value||0),max=Number(document.getElementById('maxPrice').value||99999999);status('楽天ランキングを取得しています…');document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';try{let all=[];for(let p=1;p<=pages;p++){const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:String(p)});if(genre)q.set('genreId',genre);if(period)q.set('period',period);if(affiliate)q.set('affiliateId',affiliate);const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();const result=await callRakuten(url),data=result.data;if(data?.error)throw new Error(data.error_description||data.error);const got=itemArray(data);all=all.concat(got);status(`ランキング取得中… ${p} / ${pages}ページ（${result.method} / ${got.length}件）`);await new Promise(r=>setTimeout(r,1300))}const map=new Map();all.forEach(x=>{if(x.itemCode&&!map.has(x.itemCode))map.set(x.itemCode,x)});let arr=[...map.values()].filter(x=>{const price=Number(x.itemPrice||0);return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1});arr.forEach(x=>x._score=opportunityScore(x));arr.sort((a,b)=>b._score-a._score||Number(a.rank||999)-Number(b.rank||999));candidates=arr.slice(0,10);if(!candidates.length)throw new Error('条件に合う商品がありませんでした。価格条件やジャンルIDを見直してください。');localStorage.setItem(DONE,'[]');render();status(`完了：${all.length}件を確認し、穴場候補10件を作りました。`)}catch(e){console.error(e);status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。APIテストが成功している場合は、このエラー内容をそのまま教えてください。');document.getElementById('results').innerHTML='<div class="empty">取得に失敗しました。</div>'}}
 function render(){const root=document.getElementById('results');root.innerHTML='';candidates.forEach((x,i)=>{const rank=i+1,img=imageUrl(x),copy=makeCopy(x),el=document.createElement('article');el.className='card';el.id='card-'+rank;el.innerHTML=`<div class="top"><div class="rank">${rank}位</div>${img?`<img class="thumb" src="${esc(img)}" referrerpolicy="no-referrer">`:''}<div class="meta"><h3>${esc(cleanName(x.itemName))}</h3><div class="chips"><span class="chip score">穴場スコア ${x._score}</span><span class="chip">市場ランキング ${esc(x.rank||'-')}位</span><span class="chip">レビュー ${esc(x.reviewCount??0)}件</span><span class="chip">${yen(x.itemPrice)}</span></div></div></div><textarea id="copy-${rank}" readonly>${esc(copy)}</textarea><div class="actions"><button class="primary" onclick="prepare(${rank},${JSON.stringify(directUrl(x))})">投稿準備</button><button class="gray" onclick="copyOnly(${rank})">文章コピー</button><button class="green" onclick="toggleDone(${rank})">投稿済みにする</button><button onclick="goNext(${rank})">次へ ↓</button></div><div class="cardstatus" id="cardstatus-${rank}"></div>`;root.appendChild(el)});document.getElementById('progress').style.display='block';updateProgress()}
-async function copyText(rank){const ta=document.getElementById('copy-'+rank);try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(ta.value);return true}}catch(e){}try{ta.focus();ta.select();ta.setSelectionRange(0,99999);return document.execCommand('copy')}catch(e){return false}}
-async function prepare(rank,url){const ok=await copyText(rank);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。必要なら文章をCtrl+Cしてください。';window.open(url,'_blank','noopener')}
-async function copyOnly(rank){const ok=await copyText(rank);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ コピーしました。':'コピーできませんでした。Ctrl+Cでコピーしてください。'}
+async function copyText(rank){const source=document.getElementById('copy-'+rank);if(!source)return false;const value=source.value;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);return true}}catch(e){}const sx=window.scrollX,sy=window.scrollY;const active=document.activeElement;try{const temp=document.createElement('textarea');temp.value=value;temp.setAttribute('readonly','');temp.style.position='fixed';temp.style.left='-9999px';temp.style.top='0';temp.style.opacity='0';document.body.appendChild(temp);try{temp.focus({preventScroll:true})}catch(e){temp.focus()}temp.select();temp.setSelectionRange(0,temp.value.length);const ok=document.execCommand('copy');temp.remove();try{active?.focus?.({preventScroll:true})}catch(e){}window.scrollTo(sx,sy);return ok}catch(e){window.scrollTo(sx,sy);return false}}
+async function prepare(rank,url){const st=document.getElementById('cardstatus-'+rank);if(!url){if(st)st.textContent='商品URLが見つかりませんでした。';return}const tab=window.open('about:blank','_blank');if(!tab){if(st)st.textContent='⚠️ Edgeに新しいタブをブロックされました。アドレスバー右側のポップアップ許可をONにしてください。';return}try{tab.document.write('<!doctype html><meta charset="utf-8"><title>楽天商品ページを開いています</title><body style="font-family:sans-serif;padding:30px">楽天の商品ページを開いています…</body>')}catch(e){}const ok=await copyText(rank);if(st)st.textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。コピーできなかった場合は「文章コピー」を押してください。';try{tab.location.replace(url)}catch(e){tab.location.href=url}}
+async function copyOnly(rank){const sy=window.scrollY;const ok=await copyText(rank);window.scrollTo(0,sy);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ コピーしました。画面位置はそのままです。':'コピーできませんでした。文章欄を手動で選択してCtrl+Cしてください。'}
 function doneList(){try{return JSON.parse(localStorage.getItem(DONE)||'[]')}catch(e){return[]}}
 function toggleDone(rank){let d=doneList();d=d.includes(rank)?d.filter(x=>x!==rank):[...d,rank];localStorage.setItem(DONE,JSON.stringify(d));updateProgress()}
 function updateProgress(){const d=doneList();for(let i=1;i<=10;i++){const c=document.getElementById('card-'+i);if(c)c.classList.toggle('done',d.includes(i))}const n=d.length,p=Math.round(n/10*100);document.getElementById('progressText').textContent=`${n} / 10 投稿済み`;document.getElementById('progressPct').textContent=p+'%';document.getElementById('progressBar').style.width=p+'%'}
