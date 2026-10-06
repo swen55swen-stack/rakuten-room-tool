@@ -85,7 +85,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <option value="100227">食品</option>
 <option value="551167">スイーツ・お菓子</option>
 <option value="100533">キッズ・ベビー・マタニティ</option>
-<option value="101164">おもちゃ</option>
+<option value="566382">おもちゃ</option>
 <option value="564500">スマートフォン・タブレット</option>
 </select></div>
 <div><label>期間</label><select id="period">
@@ -314,6 +314,10 @@ function recommendText(x){
 function imageUrl(x){const a=x.mediumImageUrls||x.smallImageUrls||[];if(!a.length)return '';const v=a[0];return typeof v==='string'?v:(v?.imageUrl||v?.url||'')}
 function directUrl(x){return x.affiliateUrl||x.itemUrl||''}
 async function testConnection(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:'1',elements:'rank,itemName,itemPrice,itemUrl,reviewCount,reviewAverage,availability,mediumImageUrls,itemCode'});const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();status('API接続テスト中…');try{const r=await callRakuten(url);const items=itemArray(r.data);status(`✅ API接続成功（${r.method}）\n${items.length}件取得できました。続けて「今日の10件を作る」を押してください。`)}catch(e){status('❌ API接続失敗\n'+e.message)}}
+function isExcludedProduct(x){
+  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
+  return /電子タバコ|タバコ|たばこ|煙草|vape|ベイプ|シーシャ|iqos|アイコス|glo|グロー|ploom|プルーム/.test(t);
+}
 async function research(){
   const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();
   if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}
@@ -348,7 +352,7 @@ async function research(){
     all.forEach(x=>{if(x.itemCode&&!map.has(x.itemCode))map.set(x.itemCode,x)});
     let arr=[...map.values()].filter(x=>{
       const price=Number(x.itemPrice||0);
-      return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1&&(!saleOnly||isOnSale(x));
+      return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1&&!isExcludedProduct(x)&&(!saleOnly||isOnSale(x));
     });
 
     const history=updateMonthlyHistory(arr);
@@ -358,7 +362,7 @@ async function research(){
       [...monthlyItems,...arr].forEach(x=>{if(x?.itemCode)mm.set(x.itemCode,x)});
       arr=[...mm.values()].filter(x=>{
         const price=Number(x.itemPrice||0);
-        return price>=min&&price<=max&&directUrl(x)&&(!saleOnly||isOnSale(x));
+        return price>=min&&price<=max&&directUrl(x)&&!isExcludedProduct(x)&&(!saleOnly||isOnSale(x));
       });
     }
 
