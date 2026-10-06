@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V21</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V22</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -42,6 +42,9 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 .promoBox{margin-top:11px;padding:11px 12px;background:#fff7fa;border:1px solid #f3c5d3;border-radius:10px}
 .promoTitle{font-size:12px;font-weight:900;color:#a40025;margin-bottom:6px}
 .thumbIdeas{display:flex;gap:6px;flex-wrap:wrap}
+.imageChoices{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.imageChoice{width:92px;height:92px;object-fit:cover;border-radius:10px;border:2px solid #eee;background:#fff}
+.imageHint{font-size:12px;color:#666;margin-top:6px}
 .thumbIdea{background:#fff;border:1px solid #e2a8ba;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800}
 .recommendBox{margin-top:9px;padding:10px 12px;background:#f7f8fa;border-radius:10px;font-size:13px;line-height:1.65}
 .cardstatus{font-size:13px;color:#555;margin-top:8px;min-height:18px}
@@ -52,17 +55,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V21</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V22</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V21の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V22の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V21：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV21を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V22：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV22を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -131,7 +134,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索・テーマ検索でも選択したジャンルを同時に反映します。V21は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索・テーマ検索でも選択したジャンルを同時に反映します。V22は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -205,7 +208,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV21Month-'+monthKey()}
+function monthStoreKey(){return 'roomV22Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -400,6 +403,35 @@ async function themeSearch(app,key,affiliate,theme,pages,min,max,genre){
   }
   return all;
 }
+
+function targetProfile(searchType,theme,keyword){
+  const q=(searchType==='word'?keyword:theme)||'';
+  if(/女性|レディース|ママ|主婦|女子|美容/.test(q)) return 'female';
+  if(/男性|メンズ|男子|紳士/.test(q)) return 'male';
+  return 'neutral';
+}
+function targetMismatch(x,target){
+  if(target==='neutral')return false;
+  const name=String(x.itemName||'');
+  const normalized=name.replace(/男女兼用|ユニセックス|メンズ\s*レディース|レディース\s*メンズ/gi,'');
+  if(target==='female'){
+    return /(^|[\s【［(（])メンズ([\s】］)）]|$)|男性用|紳士用|紳士服|メンズファッション|メンズ専用/i.test(normalized);
+  }
+  if(target==='male'){
+    return /レディース専用|女性用|婦人用|レディースファッション|レディース服/i.test(normalized);
+  }
+  return false;
+}
+function imageCandidates(x){
+  const a=[...(x.mediumImageUrls||[]),...(x.smallImageUrls||[])];
+  const urls=[];
+  for(const v of a){
+    const u=typeof v==='string'?v:(v?.imageUrl||v?.url||'');
+    if(u && !urls.includes(u)) urls.push(u);
+    if(urls.length>=3)break;
+  }
+  return urls;
+}
 async function research(){
   const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();
   if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}
@@ -415,7 +447,8 @@ async function research(){
     saleOnly=document.getElementById('saleOnly').value==='1',
     affiliate=document.getElementById('affiliateId').value.trim(),
     min=Number(document.getElementById('minPrice').value||0),
-    max=Number(document.getElementById('maxPrice').value||99999999);
+    max=Number(document.getElementById('maxPrice').value||99999999),
+    target=targetProfile(searchType,theme,keyword);
 
   status(searchType==='theme'?'テーマから商品を探しています…':searchType==='word'?'ワード検索しています…':'楽天ランキングを取得しています…');
   document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';
@@ -456,7 +489,7 @@ async function research(){
 
     let arr=[...map.values()].filter(x=>{
       const price=Number(x.itemPrice||0);
-      return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1&&!isExcludedProduct(x)&&(!saleOnly||isOnSale(x));
+      return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1&&!isExcludedProduct(x)&&!targetMismatch(x,target)&&(!saleOnly||isOnSale(x));
     });
 
     const history=updateMonthlyHistory(arr);
@@ -467,7 +500,7 @@ async function research(){
       [...monthlyItems,...arr].forEach(x=>{if(x?.itemCode)mm.set(x.itemCode,x)});
       arr=[...mm.values()].filter(x=>{
         const price=Number(x.itemPrice||0);
-        return price>=min&&price<=max&&directUrl(x)&&!isExcludedProduct(x)&&(!saleOnly||isOnSale(x));
+        return price>=min&&price<=max&&directUrl(x)&&!isExcludedProduct(x)&&!targetMismatch(x,target)&&(!saleOnly||isOnSale(x));
       });
     }
 
@@ -489,7 +522,8 @@ async function research(){
 
     const modeName={mix:'おまかせミックス',hidden:'穴場重視',click:'クリック期待',chappy:'チャッピーおすすめ'}[mode];
     const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+keyword+'」':'ランキング';
-    status('完了：'+sourceName+(genre?' × ジャンルID '+genre:' × 全ジャンル')+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
+    const targetName=target==='female'?'女性向けフィルター':target==='male'?'男性向けフィルター':'男女指定なし';
+    status('完了：'+sourceName+(genre?' × ジャンルID '+genre:' × 全ジャンル')+' × '+targetName+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
   }catch(e){
     console.error(e);
     status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。');
@@ -500,7 +534,7 @@ function render(){
   const root=document.getElementById('results');
   root.innerHTML='';
   candidates.forEach((x,i)=>{
-    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),el=document.createElement('article');
+    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),imgs=imageCandidates(x),el=document.createElement('article');
     el.className='card';
     el.id='card-'+rank;
     el.innerHTML=
@@ -524,7 +558,9 @@ function render(){
           '</div>'+
         '</div>'+
       '</div>'+
-      '<div class="promoBox"><div class="promoTitle">サムネ・1行目候補</div><div class="thumbIdeas">'+ideas.map(t=>'<span class="thumbIdea">'+esc(t)+'</span>').join('')+'</div></div>'+
+      '<div class="promoBox"><div class="promoTitle">サムネ・1行目候補</div><div class="thumbIdeas">'+ideas.map(t=>'<span class="thumbIdea">'+esc(t)+'</span>').join('')+'</div>'+
+      (imgs.length?'<div class="promoTitle" style="margin-top:10px">商品画像候補</div><div class="imageChoices">'+imgs.map((u,j)=>'<img class="imageChoice" src="'+esc(u)+'" title="画像候補 '+(j+1)+'" referrerpolicy="no-referrer">').join('')+'</div><div class="imageHint">ROOM投稿画面の「画像追加・編集」で、店舗画像の位置調整や自分で撮った写真への変更ができます。</div>':'')+
+      '</div>'+
       '<div class="recommendBox">'+esc(recommendText(x)).replace(/\n/g,'<br>')+'</div>'+
       '<textarea id="copy-'+rank+'" readonly>'+esc(copy)+'</textarea>'+
       '<div class="cardstatus" style="margin-top:4px">文字数：'+copy.length+' / 500</div>'+
