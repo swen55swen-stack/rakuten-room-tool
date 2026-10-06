@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V20</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V21</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -52,17 +52,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V20</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V21</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V20の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V21の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V20：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV20を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V21：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV21を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -131,7 +131,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V20は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索・テーマ検索でも選択したジャンルを同時に反映します。V21は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -205,7 +205,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV20Month-'+monthKey()}
+function monthStoreKey(){return 'roomV21Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -352,7 +352,26 @@ function isExcludedProduct(x){
   return /電子タバコ|タバコ|たばこ|煙草|vape|ベイプ|シーシャ|iqos|アイコス|glo|グロー|ploom|プルーム/.test(t);
 }
 
-async function themeSearch(app,key,affiliate,theme,pages,min,max){
+
+function relevanceScore(x,query){
+  const tokens=String(query||'').trim().toLowerCase().split(/[\s　]+/).filter(Boolean);
+  if(!tokens.length)return 0;
+  const name=String(x.itemName||'').toLowerCase();
+  const catchcopy=String(x.catchcopy||'').toLowerCase();
+  const caption=String(x.itemCaption||'').toLowerCase();
+  let s=0, matched=0;
+  for(const t of tokens){
+    let hit=false;
+    if(name.includes(t)){s+=45;hit=true}
+    else if(catchcopy.includes(t)){s+=25;hit=true}
+    else if(caption.includes(t)){s+=12;hit=true}
+    if(hit)matched++;
+  }
+  if(matched===tokens.length)s+=35;
+  else if(matched>0)s+=matched*8;
+  return s;
+}
+async function themeSearch(app,key,affiliate,theme,pages,min,max,genre){
   let all=[];
   for(let p=1;p<=pages;p++){
     const q=new URLSearchParams({
@@ -368,6 +387,7 @@ async function themeSearch(app,key,affiliate,theme,pages,min,max){
       sort:'standard'
     });
     if(affiliate)q.set('affiliateId',affiliate);
+    if(genre)q.set('genreId',genre);
     if(min>0)q.set('minPrice',String(min));
     if(max>0&&max<99999999)q.set('maxPrice',String(max));
     const url='https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?'+q.toString();
@@ -402,11 +422,13 @@ async function research(){
 
   try{
     let all=[];
+    let activeQuery='';
 
     if(searchType==='theme' || searchType==='word'){
       const query=searchType==='word'?keyword:theme;
+      activeQuery=query;
       if(!query)throw new Error(searchType==='word'?'検索したいワードを入力してください。':'おすすめテーマを選んでください。');
-      all=await themeSearch(app,key,affiliate,query,pages,min,max);
+      all=await themeSearch(app,key,affiliate,query,pages,min,max,genre);
     }else{
       const apiPeriod=periodChoice==='realtime'?'realtime':'';
       for(let p=1;p<=pages;p++){
@@ -449,8 +471,15 @@ async function research(){
       });
     }
 
-    arr.forEach(x=>x._score=finalScore(x,mode,history));
-    arr.sort((a,b)=>b._score-a._score||Number(a.rank||999)-Number(b.rank||999));
+    arr.forEach(x=>{
+      const base=finalScore(x,mode,history);
+      x._relevance=(searchType==='theme'||searchType==='word')?relevanceScore(x,activeQuery):0;
+      x._score=(searchType==='theme'||searchType==='word')?Math.round(base*.35+x._relevance*.65):base;
+    });
+    if(searchType==='theme'||searchType==='word'){
+      arr=arr.filter(x=>x._relevance>0);
+    }
+    arr.sort((a,b)=>b._score-a._score||b._relevance-a._relevance||Number(a.rank||999)-Number(b.rank||999));
     candidates=arr.slice(0,10);
 
     if(!candidates.length)throw new Error(saleOnly?'条件内にセール中の商品がありませんでした。価格・テーマ・ページ数を変えてください。':'条件に合う商品がありませんでした。テーマ・価格条件を見直してください。');
@@ -460,7 +489,7 @@ async function research(){
 
     const modeName={mix:'おまかせミックス',hidden:'穴場重視',click:'クリック期待',chappy:'チャッピーおすすめ'}[mode];
     const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+keyword+'」':'ランキング';
-    status('完了：'+sourceName+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
+    status('完了：'+sourceName+(genre?' × ジャンルID '+genre:' × 全ジャンル')+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
   }catch(e){
     console.error(e);
     status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。');
@@ -485,6 +514,7 @@ function render(){
             '<span class="chip">穴場 '+x._hidden+'</span>'+
             '<span class="chip">クリック期待 '+x._click+'</span>'+
             '<span class="chip">チャッピー '+x._chappy+'</span>'+
+            (x._relevance?'<span class="chip" style="background:#eef6ff;color:#174a9c;font-weight:900">ワード一致 '+x._relevance+'</span>':'')+
             '<span class="chip">今月 '+x._monthly+'</span>'+
             (isOnSale(x)?'<span class="chip" style="background:#fff0d9;color:#a14d00;font-weight:900">SALE中</span>':'')+
             '<span class="chip">市場ランキング '+esc(x.rank||'-')+'位</span>'+
