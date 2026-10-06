@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V18</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V19</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -52,17 +52,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V18</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V19</h1>
 <div class="sub">穴場・クリック期待・チャッピーおすすめ・月間注目・セール品をまとめて選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V18の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V19の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V18：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV18を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V19：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV19を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -130,7 +130,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V18は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V19は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -204,7 +204,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV18Month-'+monthKey()}
+function monthStoreKey(){return 'roomV19Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -296,30 +296,45 @@ function reviewLine(x){
   if(c>0)return 'レビュー'+c.toLocaleString('ja-JP')+'件。実際の購入者の声も確認して選びたいアイテムです。';
   return 'レビュー情報は商品ページで確認してから選びたいアイテムです。';
 }
+function fit500(body,tagString){
+  const tags=String(tagString||'').split(/\s+/).filter(Boolean);
+  let out=body.trim();
+  for(const tag of tags){
+    const next=out+' '+tag;
+    if(next.length<=500) out=next;
+    else break;
+  }
+  if(out.length>500) out=out.slice(0,497)+'…';
+  return out;
+}
 function makeCopy(x){
   const name=cleanName(x.itemName), info=infer(name), reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0);
   let hook='【これ、ちょっと気になる👀✨】';
   if(avg>=4.5&&reviews>=100)hook='【高評価で気になる。こういうの探してた👀✨】';
   else if(reviews<=50)hook='【売れ筋なのに、まだ穴場っぽくて気になる👀】';
   else if(Number(x.rank||999)<=10)hook='【ランキング上位で見つけた、気になるアイテム✨】';
-  const common='#楽天ROOM #楽天ROOMに載せてます #楽天市場 #楽天購入品 #お買い物マラソン #買い回り #買ってよかった #おすすめ商品 #人気商品 #気になるアイテム #30代主婦 #40代主婦 #主婦の味方 #暮らし #おうち時間 #楽天ショッピング';
-  return `${hook}
+
+  const body=`${hook}
 ${name}
 
 ${info.pain}✨
 ${info.benefit}◎
 
 ✔ こんな人におすすめ
-・毎日のちょっとした手間を減らしたい
+・毎日の手間を少し減らしたい
 ・便利で使いやすいものを選びたい
-・口コミや評価も見ながら失敗を減らしたい
+・口コミや評価も確認して選びたい
 
 ⭐ ${reviewLine(x)}
-💰 現在の表示価格：${yen(x.itemPrice)}
+💰 表示価格：${yen(x.itemPrice)}
 
-※サイズ・カラー・在庫・送料・仕様は商品ページで確認してください。
+※サイズ・在庫・送料・仕様は商品ページで確認してください。
 
-${info.tags} ${common}`;
+`;
+
+  const tags=`${info.tags} #楽天ROOM #楽天ROOMに載せてます #楽天市場 #楽天購入品 #お買い物マラソン #買い回り #買ってよかった #おすすめ商品 #人気商品 #気になるアイテム #30代主婦 #40代主婦 #主婦の味方 #暮らし #おうち時間 #楽天ショッピング #便利グッズ #暮らしを整える #生活雑貨 #時短 #家事ラク #おすすめ #楽天買い物`;
+
+  return fit500(body,tags);
 }
 function thumbnailIdeas(x){return infer(cleanName(x.itemName)).thumbs}
 function recommendText(x){
@@ -479,6 +494,7 @@ function render(){
       '<div class="promoBox"><div class="promoTitle">サムネ・1行目候補</div><div class="thumbIdeas">'+ideas.map(t=>'<span class="thumbIdea">'+esc(t)+'</span>').join('')+'</div></div>'+
       '<div class="recommendBox">'+esc(recommendText(x)).replace(/\n/g,'<br>')+'</div>'+
       '<textarea id="copy-'+rank+'" readonly>'+esc(copy)+'</textarea>'+
+      '<div class="cardstatus" style="margin-top:4px">文字数：'+copy.length+' / 500</div>'+
       '<div class="actions">'+
         '<button class="primary" id="prepare-'+rank+'">この内容で投稿準備</button>'+
         '<button class="gray" id="copybtn-'+rank+'">文章コピー</button>'+
