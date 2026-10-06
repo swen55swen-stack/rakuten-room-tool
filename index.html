@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V19</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V20</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -52,17 +52,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V19</h1>
-<div class="sub">穴場・クリック期待・チャッピーおすすめ・月間注目・セール品をまとめて選定</div>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V20</h1>
+<div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V19の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V20の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V19：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV19を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V20：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV20を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -73,7 +73,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <div><label>Affiliate ID（任意）</label><input id="affiliateId" placeholder="使う場合だけ"></div>
 <div><label>探し方</label><select id="searchType">
 <option value="ranking">ランキングから探す</option>
-<option value="theme">テーマから探す</option>
+<option value="theme">テーマから探す</option><option value="word">ワード検索</option>
 </select></div>
 <div><label>おすすめテーマ</label><select id="theme">
 <option value="">テーマ指定なし</option>
@@ -88,6 +88,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <option value="キッチン 時短 便利">キッチン時短</option>
 <option value="掃除 便利グッズ">掃除便利グッズ</option>
 </select></div>
+<div><label>自由ワード検索</label><input id="keyword" placeholder="例：着る毛布 / 北欧 インテリア / プロテイン バナナ味"></div>
 <div><label>ジャンル</label><select id="genreId">
 <option value="">全ジャンル</option>
 <option value="562637">家電</option>
@@ -130,7 +131,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V19は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。V20は入力値をこのブラウザ内にだけ保存できます。共有PCでは保存しないでください。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -157,8 +158,8 @@ const DONE='roomV11Done';
 let candidates=[];
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function yen(n){return Number(n||0).toLocaleString('ja-JP')+'円'}
-function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS)||'{}');['appId','accessKey','affiliateId','searchType','theme','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>{if(s[k]!==undefined)document.getElementById(k).value=s[k]})}catch(e){}}
-function saveSettings(){const s={};['appId','accessKey','affiliateId','searchType','theme','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);localStorage.setItem(SETTINGS,JSON.stringify(s));status('設定をこのPCのブラウザに保存しました。')}
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS)||'{}');['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>{if(s[k]!==undefined)document.getElementById(k).value=s[k]})}catch(e){}}
+function saveSettings(){const s={};['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);localStorage.setItem(SETTINGS,JSON.stringify(s));status('設定をこのPCのブラウザに保存しました。')}
 function status(t){document.getElementById('mainStatus').textContent=t}
 function redactUrl(url){try{const u=new URL(url);if(u.searchParams.has('accessKey'))u.searchParams.set('accessKey','***');if(u.searchParams.has('applicationId'))u.searchParams.set('applicationId',u.searchParams.get('applicationId').slice(0,8)+'…');return u.toString()}catch(e){return '(URL解析不可)'}}
 async function fetchApi(url){const res=await fetch(url,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});const raw=await res.text();let data=null;try{data=JSON.parse(raw)}catch(e){}if(!res.ok){const msg=data?.error_description||data?.error||raw.slice(0,300)||('HTTP '+res.status);throw new Error('HTTP '+res.status+'：'+msg)}if(!data)throw new Error('楽天APIの応答をJSONとして解析できませんでした。');return data}
@@ -204,7 +205,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV19Month-'+monthKey()}
+function monthStoreKey(){return 'roomV20Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -386,6 +387,7 @@ async function research(){
 
   const searchType=document.getElementById('searchType').value,
     theme=document.getElementById('theme').value,
+    keyword=document.getElementById('keyword').value.trim(),
     pages=Number(document.getElementById('pages').value||3),
     genre=document.getElementById('genreId').value.trim(),
     periodChoice=document.getElementById('period').value,
@@ -395,15 +397,16 @@ async function research(){
     min=Number(document.getElementById('minPrice').value||0),
     max=Number(document.getElementById('maxPrice').value||99999999);
 
-  status(searchType==='theme'?'テーマから商品を探しています…':'楽天ランキングを取得しています…');
+  status(searchType==='theme'?'テーマから商品を探しています…':searchType==='word'?'ワード検索しています…':'楽天ランキングを取得しています…');
   document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';
 
   try{
     let all=[];
 
-    if(searchType==='theme'){
-      if(!theme)throw new Error('おすすめテーマを選んでください。');
-      all=await themeSearch(app,key,affiliate,theme,pages,min,max);
+    if(searchType==='theme' || searchType==='word'){
+      const query=searchType==='word'?keyword:theme;
+      if(!query)throw new Error(searchType==='word'?'検索したいワードを入力してください。':'おすすめテーマを選んでください。');
+      all=await themeSearch(app,key,affiliate,query,pages,min,max);
     }else{
       const apiPeriod=periodChoice==='realtime'?'realtime':'';
       for(let p=1;p<=pages;p++){
@@ -456,7 +459,7 @@ async function research(){
     render();
 
     const modeName={mix:'おまかせミックス',hidden:'穴場重視',click:'クリック期待',chappy:'チャッピーおすすめ'}[mode];
-    const sourceName=searchType==='theme'?'テーマ「'+theme+'」':'ランキング';
+    const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+keyword+'」':'ランキング';
     status('完了：'+sourceName+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
   }catch(e){
     console.error(e);
