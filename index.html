@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V22</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V23</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -55,17 +55,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V22</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V23</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V22の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V23の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V22：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV22を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V23：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV23を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -134,7 +134,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索・テーマ検索でも選択したジャンルを同時に反映します。V22は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索・テーマ検索でも選択したジャンルを同時に反映します。V23は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -208,7 +208,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV22Month-'+monthKey()}
+function monthStoreKey(){return 'roomV23Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -405,20 +405,25 @@ async function themeSearch(app,key,affiliate,theme,pages,min,max,genre){
 }
 
 function targetProfile(searchType,theme,keyword){
-  const q=(searchType==='word'?keyword:theme)||'';
+  const q=((theme||'')+' '+(keyword||'')).trim();
   if(/女性|レディース|ママ|主婦|女子|美容/.test(q)) return 'female';
   if(/男性|メンズ|男子|紳士/.test(q)) return 'male';
   return 'neutral';
 }
 function targetMismatch(x,target){
   if(target==='neutral')return false;
-  const name=String(x.itemName||'');
-  const normalized=name.replace(/男女兼用|ユニセックス|メンズ\s*レディース|レディース\s*メンズ/gi,'');
+  const text=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
+
   if(target==='female'){
-    return /(^|[\s【［(（])メンズ([\s】］)）]|$)|男性用|紳士用|紳士服|メンズファッション|メンズ専用/i.test(normalized);
+    // 女性向けでは「メンズ表記」が少しでもある商品を除外
+    if(/メンズ|男性用|男性向け|男性専用|紳士|ボーイズ|mens\b|men's\b/i.test(text)) return true;
+    return false;
   }
+
   if(target==='male'){
-    return /レディース専用|女性用|婦人用|レディースファッション|レディース服/i.test(normalized);
+    // 男性向けでは明確な女性専用品を除外
+    if(/レディース|女性用|女性向け|女性専用|婦人|ガールズ|womens\b|women's\b/i.test(text)) return true;
+    return false;
   }
   return false;
 }
@@ -522,7 +527,7 @@ async function research(){
 
     const modeName={mix:'おまかせミックス',hidden:'穴場重視',click:'クリック期待',chappy:'チャッピーおすすめ'}[mode];
     const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+keyword+'」':'ランキング';
-    const targetName=target==='female'?'女性向けフィルター':target==='male'?'男性向けフィルター':'男女指定なし';
+    const targetName=target==='female'?'女性向け厳格フィルター':target==='male'?'男性向け厳格フィルター':'男女指定なし';
     status('完了：'+sourceName+(genre?' × ジャンルID '+genre:' × 全ジャンル')+' × '+targetName+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
   }catch(e){
     console.error(e);
