@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V24</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V25</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V24</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V25</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V24の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V25の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V24：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV24を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V25：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV25を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ハッシュタグは商品名・説明文の内容に合わせて自動生成します。V24は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ハッシュタグは商品名・説明文の内容に合わせて自動生成します。V25は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -209,7 +209,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV24Month-'+monthKey()}
+function monthStoreKey(){return 'roomV25Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -288,6 +288,13 @@ function infer(name){
     tags:'#家電 #ガジェット #便利アイテム #スマホグッズ #暮らし #時短 #楽天市場 #買い物',
     thumbs:['これ便利','毎日使いたい','あると助かる']
   };
+  if(/旅行|宿泊|ホテル|旅館|トラベル|クーポン|宿泊券|旅行券|チケット|ふるさと納税|温泉|観光/.test(n))return {
+    cat:'旅行・おでかけ',
+    pain:'次の旅行やおでかけ先を探している人に',
+    benefit:'週末旅行やごほうび旅の候補としてチェックしたい内容',
+    tags:'#旅行 #国内旅行 #ホテル #旅館 #温泉旅行 #おでかけ #週末旅行 #楽天トラベル #ふるさと納税 #旅行好き',
+    thumbs:['次の旅候補に','週末旅に','旅行好き必見']
+  };
   return {
     cat:'暮らし', pain:'「これ便利そう」が好きな人に',
     benefit:'毎日の暮らしに取り入れやすそうなアイテム',
@@ -323,6 +330,7 @@ function hashtagProfile(x){
   if(/一人暮らし|ひとり暮らし/.test(text)) add('#一人暮らし','#ひとり暮らし','#新生活','#暮らしのアイデア');
   if(/スマホ|iphone|android|イヤホン|充電|モバイル|ケーブル|タブレット/.test(text)) add('#スマホグッズ','#ガジェット','#便利アイテム','#家電');
   if(/加湿|毛布|ヒータ|暖房|こたつ|湯たんぽ/.test(text)) add('#秋冬支度','#冬支度','#あったかグッズ','#冷え対策','#おうち時間');
+  if(/旅行|宿泊|ホテル|旅館|トラベル|宿泊券|旅行券|温泉|観光|ふるさと納税/.test(text)) add('#旅行','#国内旅行','#ホテル','#旅館','#温泉旅行','#おでかけ','#楽天トラベル','#ふるさと納税');
   if(/食品|米|コーヒー|お菓子|スイーツ|パン|水|飲料/.test(text)) add('#食品','#お取り寄せ','#おうち時間','#楽天グルメ');
 
   // Sale / shopping context only when true/relevant
@@ -353,6 +361,14 @@ function makeCopy(x){
   else if(reviews<=50)hook='【売れ筋なのに、まだ穴場っぽくて気になる👀】';
   else if(Number(x.rank||999)<=10)hook='【ランキング上位で見つけた、気になるアイテム✨】';
 
+  const travel=info.cat==='旅行・おでかけ';
+  const bullets=travel
+    ? '・次の旅行先を探している\n・ホテルや旅館を比較したい\n・お得に旅行を楽しみたい'
+    : '・毎日の手間を少し減らしたい\n・便利で使いやすいものを選びたい\n・口コミや評価も確認して選びたい';
+  const note=travel
+    ? '※対象施設・利用条件・有効期限・予約条件は商品ページで確認してください。'
+    : '※サイズ・在庫・送料・仕様は商品ページで確認してください。';
+
   const body=`${hook}
 ${name}
 
@@ -360,14 +376,12 @@ ${info.pain}✨
 ${info.benefit}◎
 
 ✔ こんな人におすすめ
-・毎日の手間を少し減らしたい
-・便利で使いやすいものを選びたい
-・口コミや評価も確認して選びたい
+${bullets}
 
 ⭐ ${reviewLine(x)}
 💰 表示価格：${yen(x.itemPrice)}
 
-※サイズ・在庫・送料・仕様は商品ページで確認してください。
+${note}
 
 `;
 
