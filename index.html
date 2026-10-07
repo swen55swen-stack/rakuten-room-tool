@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V28</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V29</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V28</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V29</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V28の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V29の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V28：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV28を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V29：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV29を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V28は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V29は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -172,20 +172,46 @@ async function callRakuten(url){let fetchErr='';try{const data=await fetchApi(ur
 function itemArray(data){let arr=data?.items||data?.Items||[];return arr.map(x=>x?.item||x?.Item||x).filter(Boolean)}
 function opportunityScore(x){const rank=Number(x.rank||999),reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0),aff=Number(x.affiliateRate||0);let s=0;s+=Math.max(0,55-(rank*.55));if(reviews<=5)s+=38;else if(reviews<=20)s+=34;else if(reviews<=50)s+=30;else if(reviews<=100)s+=26;else if(reviews<=300)s+=20;else if(reviews<=800)s+=12;else if(reviews<=2000)s+=6;if(price>=1000&&price<=5000)s+=15;else if(price>5000&&price<=10000)s+=11;else if(price>10000&&price<=20000)s+=7;else if(price<1000)s+=6;if(avg>=4.3)s+=6;else if(avg>=4)s+=4;if(Number(x.availability??1)===1)s+=4;if((x.mediumImageUrls||[]).length)s+=3;s+=Math.min(8,aff*1.5);return Math.round(s)}
 
-function isOnSale(x){
+function isApiSaleActive(x){
   if(!x.startTime || !x.endTime) return false;
   const s=new Date(String(x.startTime).replace(' ','T'));
   const e=new Date(String(x.endTime).replace(' ','T'));
   const now=new Date();
   return !isNaN(s)&&!isNaN(e)&&now>=s&&now<=e;
 }
-
+function saleText(x){
+  return (String(x.itemName||'')+' '+String(x.catchcopy||'')).replace(/\s+/g,' ');
+}
+function hasSaleText(x){
+  const t=saleText(x);
+  return /(?:sale|セール|\d{1,2}\s*%\s*off|offクーポン|クーポン(?:配布|利用|対象|あり|で)|ポイント\s*\d+\s*倍|期間限定|お買い得|タイムセール)/i.test(t);
+}
+function isOnSale(x){
+  return isApiSaleActive(x) || hasSaleText(x);
+}
 function saleEndLabel(x){
-  if(!isOnSale(x) || !x.endTime) return '';
-  const raw=String(x.endTime).trim();
-  const m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if(!m) return '';
-  return Number(m[2])+'月'+Number(m[3])+'日までSALE';
+  if(isApiSaleActive(x) && x.endTime){
+    const m=String(x.endTime).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m)return Number(m[2])+'月'+Number(m[3])+'日までSALE';
+  }
+  const t=saleText(x);
+  let m=t.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日(?:[^\d]{0,8})?(?:まで|迄)/);
+  if(m)return Number(m[1])+'月'+Number(m[2])+'日までSALE';
+  m=t.match(/(\d{1,2})\s*\/\s*(\d{1,2})(?:\([^)]*\))?(?:[^\d]{0,10})?(?:まで|迄)/);
+  if(m)return Number(m[1])+'月'+Number(m[2])+'日までSALE';
+  m=t.match(/(?:まで|迄)[^\d]{0,5}(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+  if(m)return Number(m[1])+'月'+Number(m[2])+'日までSALE';
+  if(/クーポン/i.test(t)){
+    const pct=t.match(/(\d{1,2})\s*%\s*off/i);
+    return pct ? pct[1]+'%OFFクーポン' : 'クーポン対象';
+  }
+  const pct=t.match(/(\d{1,2})\s*%\s*off/i);
+  if(pct)return pct[1]+'%OFF';
+  if(/ポイント\s*\d+\s*倍/i.test(t)){
+    const p=t.match(/ポイント\s*(\d+)\s*倍/i);
+    if(p)return 'ポイント'+p[1]+'倍';
+  }
+  return hasSaleText(x)?'SALE中':'';
 }
 function clickScore(x){
   const rank=Number(x.rank||999), reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0), price=Number(x.itemPrice||0);
@@ -217,7 +243,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV28Month-'+monthKey()}
+function monthStoreKey(){return 'roomV29Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -361,7 +387,7 @@ function hashtagProfile(x){
     add('#秋冬支度','#冬支度','#あったかグッズ','#冷え対策','#おうち時間');
   }
 
-  if(isOnSale(x)) add('#セール','#お買い得','#買い回り');
+  if(isOnSale(x)) add('#セール','#お買い得','#買い回り','#楽天セール');
   if(Number(x.pointRate||1)>=3) add('#ポイントアップ');
 
   if(/レディース|女性用|女性向け|ママ|主婦/.test(text)) add('#女性向け','#30代女性','#40代女性');
