@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V26</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V27</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V26</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V27</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V26の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V27の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V26：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV26を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V27：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV27を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V26は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V27は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -179,6 +179,14 @@ function isOnSale(x){
   const now=new Date();
   return !isNaN(s)&&!isNaN(e)&&now>=s&&now<=e;
 }
+
+function saleEndLabel(x){
+  if(!isOnSale(x) || !x.endTime) return '';
+  const raw=String(x.endTime).trim();
+  const m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(!m) return '';
+  return Number(m[2])+'月'+Number(m[3])+'日までSALE';
+}
 function clickScore(x){
   const rank=Number(x.rank||999), reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0), price=Number(x.itemPrice||0);
   let s=0;
@@ -209,7 +217,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV26Month-'+monthKey()}
+function monthStoreKey(){return 'roomV27Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -378,7 +386,7 @@ ${info.benefit}◎
 ✔ こんな人におすすめ
 ${bullets}
 
-⭐ ${reviewLine(x)}
+${isOnSale(x)&&saleEndLabel(x)?'🔥 '+saleEndLabel(x)+'\n':''}⭐ ${reviewLine(x)}
 💰 表示価格：${yen(x.itemPrice)}
 
 ${note}
@@ -608,7 +616,7 @@ function render(){
             '<span class="chip">チャッピー '+x._chappy+'</span>'+
             (x._relevance?'<span class="chip" style="background:#eef6ff;color:#174a9c;font-weight:900">ワード一致 '+x._relevance+'</span>':'')+
             '<span class="chip">今月 '+x._monthly+'</span>'+
-            (isOnSale(x)?'<span class="chip" style="background:#fff0d9;color:#a14d00;font-weight:900">SALE中</span>':'')+
+            (isOnSale(x)?'<span class="chip" style="background:#fff0d9;color:#a14d00;font-weight:900">'+esc(saleEndLabel(x)||'SALE中')+'</span>':'')+
             '<span class="chip">市場ランキング '+esc(x.rank||'-')+'位</span>'+
             '<span class="chip">レビュー '+esc(x.reviewCount??0)+'件</span>'+
             '<span class="chip">評価 '+esc(x.reviewAverage??'-')+'</span>'+
