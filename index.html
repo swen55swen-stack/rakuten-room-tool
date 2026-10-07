@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V33</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V34</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V33</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V34</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V33の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V34の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V33：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV33を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V34：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV34を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V33は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V34は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -243,7 +243,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV33Month-'+monthKey()}
+function monthStoreKey(){return 'roomV34Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -548,32 +548,42 @@ function benefitTalk(features,info){
   }
   return info.benefit+'のが気になるポイントです。';
 }
+function strongReviewText(x){
+  const count=Number(x.reviewCount||0);
+  const avg=Number(x.reviewAverage||0);
+  if(count>=1000){
+    return 'レビュー'+count.toLocaleString()+'件。口コミ数がかなり多いので、購入前の比較材料にしやすいです◎';
+  }
+  if(count>=100 && avg>=4.4){
+    return 'レビュー'+count.toLocaleString()+'件・評価'+avg.toFixed(2)+'。数字もしっかり出ているので気になる人は口コミも見ておきたいです◎';
+  }
+  return '';
+}
 function buildPostBody(x,info,style){
   const name=cleanName(x.itemName);
-  const rv=reviewLine(x);
   const price=yen(x.itemPrice);
   const sale=saleEndLabel(x);
   const features=featureList(x);
   const hook=talkHook(x,info);
   const benefit=benefitTalk(features,info);
-  const reviews=Number(x.reviewCount||0);
+  const reviewStrong=strongReviewText(x);
 
   let middle='';
   if(style==='sale'){
     middle=(sale?'🔥 '+sale+'\n':'')+'気になっていた人は、条件が変わる前に一度見ておきたいところ。';
-  }else if(style==='review'){
-    middle=reviews>=1000
-      ? 'レビュー数が多いので、良いところだけじゃなく気になる点まで見比べやすいのも助かります。'
-      : 'レビューはまだ多くないので、味やサイズ感など気になるところは商品ページで確認しておきたいです。';
+  }else if(style==='review' && reviewStrong){
+    middle=reviewStrong;
   }else if(style==='season'){
     middle='季節ものは必要になってから探すと選べるものが減ることも。今のうちに候補に入れておくと安心です◎';
   }else if(style==='problem'){
     middle='こういう「ちょっと面倒」を減らしてくれるものって、使い始めると出番が多くなりがちです。';
   }else if(style==='comparison'){
-    middle='似た商品も多いので、価格だけじゃなく使いやすさやレビューまで見比べて決めたいところ。';
+    middle='似た商品も多いので、価格だけじゃなく使いやすさや仕様まで見比べて決めたいところ。';
   }else{
     middle='見た目だけじゃなく、実際に自分の生活で使う場面を想像すると選びやすいです◎';
   }
+
+  const reviewLine = (style!=='review' && reviewStrong) ? '\n'+reviewStrong : '';
 
   return `${hook}
 
@@ -582,10 +592,9 @@ ${name}
 ${benefit}
 ${info.pain}なら、かなり気になる候補だと思います。
 
-${middle}
+${middle}${reviewLine}
 
-⭐ ${rv}
-💰 表示価格：${price}
+💰 価格：${price}
 
 気になったら、サイズ・仕様・在庫まで商品ページで見てみてください◎`;
 }
