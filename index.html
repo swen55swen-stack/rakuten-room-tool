@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V30</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V31</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V30</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V31</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V30の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V31の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V30：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV30を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V31：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV31を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V30は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V31は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -243,7 +243,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV30Month-'+monthKey()}
+function monthStoreKey(){return 'roomV31Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -470,46 +470,125 @@ function fit500(body,tagString){
   if(out.length>500) out=out.slice(0,497)+'…';
   return out;
 }
-function makeCopy(x){
-  const name=cleanName(x.itemName), info=infer(name), reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0);
-  let hook='【これ、ちょっと気になる👀✨】';
-  if(avg>=4.5&&reviews>=100)hook='【高評価で気になる。こういうの探してた👀✨】';
-  else if(reviews<=50)hook='【売れ筋なのに、まだ穴場っぽくて気になる👀】';
-  else if(Number(x.rank||999)<=10)hook='【ランキング上位で見つけた、気になるアイテム✨】';
+function pickPostStyle(x,info){
+  const name=String(x.itemName||'');
+  const reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0);
+  if(isOnSale(x)) return 'sale';
+  if(info.cat==='旅行・おでかけ') return 'discovery';
+  if(info.cat==='寝具' || info.cat==='秋冬') return 'season';
+  if(reviews>=1000 && avg>=4.4) return 'review';
+  if(/収納|掃除|キッチン|時短|便利|省スペース/.test(name)) return 'problem';
+  if(Number(x.rank||999)<=10) return 'discovery';
+  const code=String(x.itemCode||name);
+  const sum=[...code].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return ['empathy','comparison','discovery'][sum%3];
+}
+function buildPostBody(x,info,style){
+  const name=cleanName(x.itemName);
+  const rv=reviewLine(x);
+  const price=yen(x.itemPrice);
+  const sale=saleEndLabel(x);
 
-  const travel=info.cat==='旅行・おでかけ';
-  const bedding=info.cat==='寝具';
-  const winter=info.cat==='秋冬';
-  const bullets=travel
-    ? '・次の旅行先を探している\n・ホテルや旅館を比較したい\n・お得に旅行を楽しみたい'
-    : bedding
-    ? '・寒い夜を快適に眠りたい\n・あたたかい寝具を探している\n・洗いやすさや使いやすさも重視したい'
-    : winter
-    ? '・寒さ対策をしたい\n・おうち時間を快適にしたい\n・冬支度を始めたい'
-    : '・毎日の手間を少し減らしたい\n・便利で使いやすいものを選びたい\n・口コミや評価も確認して選びたい';
-  const note=travel
-    ? '※対象施設・利用条件・有効期限・予約条件は商品ページで確認してください。'
-    : '※サイズ・在庫・送料・仕様は商品ページで確認してください。';
+  if(style==='sale'){
+    return `【今チェックしておきたい👀】
+${name}
 
-  const body=`${hook}
+${sale?'🔥 '+sale+'\n':''}${info.benefit}◎
+気になっていた人は、条件が変わる前に一度見ておきたいアイテム。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※価格・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='review'){
+    return `【レビュー多めで気になったアイテム👀】
+${name}
+
+${rv}
+口コミ数が多い商品は、良い点だけじゃなく気になる点も見つけやすいのが助かる◎
+${info.pain}チェックしておきたいです。
+
+💰 表示価格：${price}
+
+※仕様・在庫・送料は商品ページで確認してください。`;
+  }
+
+  if(style==='season'){
+    return `【季節が来る前にチェックしておきたい🍂】
 ${name}
 
 ${info.pain}✨
+${info.benefit}。
+季節ものは必要になってから探すと選択肢が減ることもあるので、今のうちに候補入り◎
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='problem'){
+    return `【こういう地味なストレス、減らしたい…！】
+${name}
+
+${info.pain}。
+${info.benefit}のが良さそう◎
+「毎回ちょっと面倒」を減らせるものって、結局出番が多い気がします。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='comparison'){
+    return `【これ、比較候補に入れておきたい👀】
+${name}
+
 ${info.benefit}◎
+似た商品が多いジャンルだから、価格だけじゃなくレビューや使い方も見比べたいところ。
+${info.pain}候補のひとつとしてチェックしたいです。
 
-✔ こんな人におすすめ
-${bullets}
+⭐ ${rv}
+💰 表示価格：${price}
 
-${isOnSale(x)&&saleEndLabel(x)?'🔥 '+saleEndLabel(x)+'\n':''}⭐ ${reviewLine(x)}
-💰 表示価格：${yen(x.itemPrice)}
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
 
-${note}
+  if(style==='empathy'){
+    return `【こういうの探してた人、多そう👀】
+${name}
 
-`;
+${info.pain}✨
+${info.benefit}のが気になるポイント。
+派手じゃないけど、毎日の使いやすさってこういうところで差が出そう◎
 
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  return `【ランキングで見つけて気になった👀✨】
+${name}
+
+${info.pain}。
+${info.benefit}◎
+「こんなのあったんだ」と思える商品は、つい詳しく見たくなります。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+}
+function makeCopy(x){
+  const info=infer(cleanName(x.itemName));
+  const style=pickPostStyle(x,info);
+  const body=buildPostBody(x,info,style);
   const tags=hashtagProfile(x);
-
-  return fit500(body,tags);
+  return fit500(body+'\n\n',tags);
 }
 function thumbnailIdeas(x){return infer(cleanName(x.itemName)).thumbs}
 function recommendText(x){
@@ -714,7 +793,7 @@ function render(){
   const root=document.getElementById('results');
   root.innerHTML='';
   candidates.forEach((x,i)=>{
-    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),imgs=imageCandidates(x),el=document.createElement('article');
+    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),imgs=imageCandidates(x),style=pickPostStyle(x,infer(cleanName(x.itemName))),el=document.createElement('article');
     el.className='card';
     el.id='card-'+rank;
     el.innerHTML=
@@ -734,6 +813,7 @@ function render(){
             '<span class="chip">市場ランキング '+esc(x.rank||'-')+'位</span>'+
             '<span class="chip">レビュー '+esc(x.reviewCount??0)+'件</span>'+
             '<span class="chip">評価 '+esc(x.reviewAverage??'-')+'</span>'+
+            '<span class="chip">文章 '+({sale:'セール訴求',review:'レビュー注目',season:'季節訴求',problem:'悩み解決',comparison:'比較型',empathy:'共感型',discovery:'発見型'}[style]||'発見型')+'</span>'+
             '<span class="chip">'+yen(x.itemPrice)+'</span>'+
           '</div>'+
         '</div>'+
