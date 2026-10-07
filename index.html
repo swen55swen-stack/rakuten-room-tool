@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V38</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V39</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V38</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V39</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V38の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V39の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V38：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV38を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V39：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV39を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -137,7 +137,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button style="background:#f28c00;color:#fff" onclick="hotResearch()">🔥 今売れてる10件</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V38は入力値をこのブラウザ内にだけ保存できます。「🔥 今売れてる10件」はリアルタイム順位とデイリー順位を比較して勢いのある商品を選びます。用途が判別できない販促ワード中心の商品は評価を下げ、曖昧な紹介文を作らないようにしています。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V39は入力値をこのブラウザ内にだけ保存できます。「🔥 今売れてる10件」はリアルタイム順位とデイリー順位を比較して勢いのある商品を選びます。商品名・キャッチコピー・商品説明から用途を判定し、商品ごとに使う場面やメリットを変えます。用途が判別できない販促ワード中心の商品は評価を下げ、曖昧な紹介文を作らないようにしています。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -181,7 +181,7 @@ function hasConcreteProductInfo(x){
   const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
   const promoOnly=/^(?:(?:1000円|1,000円|送料無料|ポイント\d+倍|\d+倍|セール|sale|クーポン|お買い得|ぽっきり|ポッキリ|ギフト|プレゼント|雑貨|便利グッズ|期間限定|ランキング|楽天|買い回り|マラソン|福袋|セット|おすすめ)[\s　・,/／_-]*)+$/i;
   if(promoOnly.test(t.trim())) return false;
-  const concrete=/プロテイン|ホエイ|ソイ|布団|毛布|枕|寝具|収納|ラック|ケース|ボックス|掃除|クリーナ|モップ|ブラシ|キッチン|フライパン|鍋|包丁|水切|美容|コスメ|シャンプ|ドライヤ|バッグ|財布|靴|スニーカー|スマホ|イヤホン|充電|ケーブル|旅行|ホテル|旅館|温泉|ベビー|キッズ|おむつ|タオル|ハンガー|ボトル|タンブラー|食器|食品|肉|魚|米|スイーツ|ケーキ|コーヒー|お茶|洗剤|ティッシュ|マスク|家具|照明|ラグ|カーテン|ソファ|テーブル|チェア|ベッド|時計|文具|ペン|ノート|傘|靴下|シャツ|パンツ|ワンピ|ジャケット/i;
+  const concrete=/プロテイン|ホエイ|ソイ|布団|毛布|枕|寝具|収納|ラック|ケース|ボックス|掃除|クリーナ|モップ|ブラシ|キッチン|フライパン|鍋|包丁|水切|美容|コスメ|シャンプ|ドライヤ|バッグ|財布|靴|スニーカー|スマホ|イヤホン|充電|ケーブル|旅行|ホテル|旅館|温泉|ベビー|キッズ|おむつ|タオル|ハンガー|ボトル|タンブラー|食器|食品|肉|魚|米|スイーツ|ケーキ|コーヒー|お茶|洗剤|ティッシュ|マスク|家具|照明|ラグ|カーテン|ソファ|テーブル|チェア|ベッド|時計|文具|ペン|ノート|傘|靴下|シャツ|パンツ|ワンピ|ジャケット|珪藻土|コースター|タンブラー|水筒|マグボトル|モバイルバッテリー|充電器|フライパン|包丁|まな板|タオル|傘立て|折りたたみ傘|日傘|ティッシュケース/i;
   return concrete.test(t);
 }
 function opportunityScore(x){const rank=Number(x.rank||999),reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0),aff=Number(x.affiliateRate||0);let s=0;if(!hasConcreteProductInfo(x))s-=45;s+=Math.max(0,55-(rank*.55));if(reviews<=5)s+=38;else if(reviews<=20)s+=34;else if(reviews<=50)s+=30;else if(reviews<=100)s+=26;else if(reviews<=300)s+=20;else if(reviews<=800)s+=12;else if(reviews<=2000)s+=6;if(price>=1000&&price<=5000)s+=15;else if(price>5000&&price<=10000)s+=11;else if(price>10000&&price<=20000)s+=7;else if(price<1000)s+=6;if(avg>=4.3)s+=6;else if(avg>=4)s+=4;if(Number(x.availability??1)===1)s+=4;if((x.mediumImageUrls||[]).length)s+=3;s+=Math.min(8,aff*1.5);return Math.round(s)}
@@ -325,6 +325,76 @@ function finalScore(x,mode,h){
   return Math.round(hidden*.30+click*.35+chap*.25+monthly*.10);
 }
 function cleanName(name){return String(name||'').replace(/【[^】]*】/g,' ').replace(/[＼／]/g,' ').replace(/\s+/g,' ').trim().slice(0,72)}
+function productSpecificProfile(x){
+  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
+
+  const rules=[
+    {
+      re:/珪藻土.*コースター|コースター.*珪藻土/,
+      data:{cat:'珪藻土コースター',pain:'冷たい飲み物の水滴でテーブルが濡れるのが気になる人に',benefit:'グラスの下に敷いて、結露の水滴を吸いやすくしてくれる',tags:'#珪藻土コースター #コースター #水滴対策 #結露対策 #テーブル雑貨 #キッチン雑貨 #デスク用品',thumbs:['水滴対策に','グラスの下に','机びちゃびちゃ対策']}
+    },
+    {
+      re:/タンブラー/,
+      data:{cat:'タンブラー',pain:'飲み物の温度をできるだけキープしたい人に',benefit:'デスクや食卓で飲み物を楽しみやすい',tags:'#タンブラー #マイタンブラー #ドリンクグッズ #デスク用品 #おうち時間',thumbs:['毎日の一杯に','デスク用にも','飲み物時間に']}
+    },
+    {
+      re:/水筒|マグボトル|ボトル/,
+      data:{cat:'ボトル',pain:'外出先でも飲み物を持ち歩きたい人に',benefit:'通勤・通学・お出かけの水分補給に使いやすい',tags:'#水筒 #マグボトル #水分補給 #通勤グッズ #お出かけ',thumbs:['持ち歩きに','毎日の水分補給','外出のお供に']}
+    },
+    {
+      re:/モバイルバッテリー/,
+      data:{cat:'モバイルバッテリー',pain:'外出先でスマホの充電切れが不安な人に',benefit:'コンセントがない場所でもスマホを充電できる',tags:'#モバイルバッテリー #スマホ充電 #充電切れ対策 #旅行グッズ #ガジェット',thumbs:['充電切れ対策','外出の必需品','持ってて安心']}
+    },
+    {
+      re:/充電器|usb充電|急速充電/,
+      data:{cat:'充電器',pain:'スマホや機器の充電を少しでもスムーズにしたい人に',benefit:'毎日の充電環境を整えやすい',tags:'#充電器 #急速充電 #スマホグッズ #ガジェット #デスク周り',thumbs:['充電環境を快適に','毎日使う充電器','デスク周りに']}
+    },
+    {
+      re:/フライパン/,
+      data:{cat:'フライパン',pain:'毎日の料理を少しでも作りやすくしたい人に',benefit:'焼く・炒めるなど普段の調理で出番が多い',tags:'#フライパン #キッチングッズ #料理 #自炊 #時短家事',thumbs:['毎日の料理に','使いやすいフライパン','自炊の相棒']}
+    },
+    {
+      re:/包丁/,
+      data:{cat:'包丁',pain:'毎日の食材カットをスムーズにしたい人に',benefit:'下ごしらえのしやすさに関わるキッチンの定番道具',tags:'#包丁 #キッチングッズ #料理道具 #自炊 #下ごしらえ',thumbs:['毎日の下ごしらえ','切れ味チェック','料理の相棒']}
+    },
+    {
+      re:/まな板/,
+      data:{cat:'まな板',pain:'食材の下ごしらえをしやすくしたい人に',benefit:'毎日の調理スペースを整えやすい',tags:'#まな板 #キッチングッズ #料理 #自炊 #調理器具',thumbs:['毎日の料理に','下ごしらえに','キッチン定番']}
+    },
+    {
+      re:/ハンガー/,
+      data:{cat:'ハンガー',pain:'クローゼットを使いやすく整えたい人に',benefit:'衣類を掛けて収納しやすく、服の整理に使える',tags:'#ハンガー #クローゼット収納 #衣類収納 #整理収納 #収納グッズ',thumbs:['クローゼット整理','衣類収納に','服をすっきり']}
+    },
+    {
+      re:/傘立て/,
+      data:{cat:'傘立て',pain:'玄関の傘をすっきりまとめたい人に',benefit:'玄関で傘の置き場所を作りやすい',tags:'#傘立て #玄関収納 #玄関インテリア #収納 #暮らしを整える',thumbs:['玄関すっきり','傘の定位置に','玄関収納']}
+    },
+    {
+      re:/折りたたみ傘|日傘|雨傘/,
+      data:{cat:'傘',pain:'雨の日や日差しの強い日の外出対策をしたい人に',benefit:'通勤やお出かけで持ち歩きやすい',tags:'#傘 #折りたたみ傘 #日傘 #雨の日 #お出かけグッズ',thumbs:['外出のお供に','雨の日対策','持ち歩きに']}
+    },
+    {
+      re:/枕|まくら/,
+      data:{cat:'枕',pain:'寝る時の首や頭まわりのフィット感が気になる人に',benefit:'毎日の睡眠環境を見直すきっかけにしやすい',tags:'#枕 #まくら #寝具 #睡眠環境 #快眠',thumbs:['枕見直しに','睡眠環境を整える','毎晩使うものだから']}
+    },
+    {
+      re:/タオル/,
+      data:{cat:'タオル',pain:'毎日使うタオルの肌ざわりや吸水性を重視したい人に',benefit:'洗面・お風呂・キッチンなど日常で使いやすい',tags:'#タオル #日用品 #バスタイム #洗面所 #暮らし',thumbs:['毎日使うタオル','肌ざわり重視','日用品こそ大事']}
+    },
+    {
+      re:/ティッシュケース/,
+      data:{cat:'ティッシュケース',pain:'生活感が出やすいティッシュをすっきり置きたい人に',benefit:'テーブルや洗面所に置くティッシュをまとめやすい',tags:'#ティッシュケース #インテリア雑貨 #生活雑貨 #部屋づくり #暮らしを整える',thumbs:['生活感を隠す','置くだけすっきり','部屋になじむ']}
+    }
+  ];
+  for(const r of rules){
+    if(r.re.test(t)) return r.data;
+  }
+  return null;
+}
+
+function itemProfile(x){
+  return productSpecificProfile(x) || itemProfile(x);
+}
 function infer(name){
   const n=String(name||'');
   if(/掃除|クリーナ|ブラシ|モップ|洗剤|ワイパ/.test(n))return {
@@ -464,7 +534,9 @@ function hashtagProfile(x){
   keywordRules.forEach(([re,vals])=>{if(re.test(text))vals.forEach(addTag)});
 
   // カテゴリタグ
-  if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(text)){
+  if(/珪藻土.*コースター|コースター.*珪藻土/.test(text)){
+    add('#珪藻土コースター','#コースター','#水滴対策','#結露対策','#テーブル雑貨','#デスク用品');
+  }else if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(text)){
     add('#寝具','#掛け布団','#あったか寝具','#快眠','#冬支度','#寝室');
   }else if(/掃除|クリーナ|ブラシ|モップ|ワイパ|洗剤/.test(text)){
     add('#掃除グッズ','#家事ラク','#時短家事','#掃除用品','#暮らしを整える');
@@ -525,10 +597,14 @@ function fit500(body,tagString){
   return out;
 }
 function featureList(x){
-  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
+  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
   const out=[];
   const add=(label,desc)=>{if(!out.some(v=>v.label===label))out.push({label,desc})};
   const rules=[
+    [/珪藻土/, '珪藻土', '飲み物の結露などの水分を吸いやすい素材'],
+    [/吸水|吸湿/, '吸水', '水滴を受け止めやすい'],
+    [/滑り止め/, '滑り止め', '置いた物がずれにくいよう工夫された仕様'],
+    [/速乾/, '速乾', '濡れた後も乾きやすい'],
     [/シンサレート/, 'シンサレート', '軽さとあたたかさを両立しやすい素材'],
     [/フランネル/, 'フランネル', 'なめらかであたたかみのある肌ざわり'],
     [/ピーチスキン/, 'ピーチスキン', 'さらっとやわらかな質感'],
@@ -590,6 +666,13 @@ function stablePick(x,arr){
 function talkHook(x,info){
   const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
 
+  if(/珪藻土.*コースター|コースター.*珪藻土/.test(t)){
+    return stablePick(x,[
+      '冷たい飲み物を置いた時、グラスの水滴でテーブルが濡れるの気になりません？🥤',
+      'コップを持ち上げたら、テーブルに水の輪っかが…ってことありません？',
+      'デスクで冷たい飲み物を飲む人、コースターの水滴問題って地味に気になりますよね。'
+    ]);
+  }
   if(/プロテイン|ホエイ|ソイ/.test(t)){
     return stablePick(x,[
       '「プロテイン、味で失敗したくない…」って思ったことありません？👀',
@@ -685,6 +768,25 @@ ${name}
 
 気になる場合は、商品内容・仕様・ショップ説明を確認してみてください◎`;
   }
+  const isCoaster=/珪藻土.*コースター|コースター.*珪藻土/.test(allText);
+  if(isCoaster){
+    const saleLine=sale?'\n🔥 '+sale:'';
+    const reviewLine=reviewStrong?'\n'+reviewStrong:'';
+    return `${hook}
+
+${name}
+
+冷たいグラスの下って、結露した水滴でテーブルが濡れやすいですよね。
+これは飲み物の下に敷いて使う珪藻土コースター。水分を吸いやすい珪藻土だから、グラスまわりの水滴対策に使いやすそうです。
+
+食卓はもちろん、仕事中のデスクやコーヒータイムにも置きやすいアイテム。
+「毎回テーブルを拭くのが地味に面倒」という人はチェックしてみてもよさそう◎${saleLine}${reviewLine}
+
+💰 価格：${price}
+
+サイズ・デザイン・お手入れ方法まで商品ページで確認してみてください。`;
+  }
+
   const isProtein=/プロテイン|ホエイ|ソイ/.test(allText);
 
   if(isProtein){
@@ -761,15 +863,15 @@ ${middle}${reviewLine}
 気になったら、サイズ・仕様・在庫まで商品ページで見てみてください◎`;
 }
 function makeCopy(x){
-  const info=infer(cleanName(x.itemName));
+  const info=itemProfile(x);
   const style=pickPostStyle(x,info);
   const body=buildPostBody(x,info,style);
   const tags=hashtagProfile(x);
   return fit500(body+'\n\n',tags);
 }
-function thumbnailIdeas(x){return infer(cleanName(x.itemName)).thumbs}
+function thumbnailIdeas(x){return itemProfile(x).thumbs}
 function recommendText(x){
-  const info=infer(cleanName(x.itemName));
+  const info=itemProfile(x);
   const c=Number(x.reviewCount||0),a=Number(x.reviewAverage||0);
   const rv=c&&a?'レビュー '+c.toLocaleString('ja-JP')+'件 / 評価 '+a.toFixed(2):'レビュー情報は商品ページで確認';
   return '🎯 狙い：'+info.cat+'系｜'+info.pain+'\n📊 '+rv+'｜市場ランキング '+(x.rank||'-')+'位';
@@ -1003,7 +1105,7 @@ function render(){
   const root=document.getElementById('results');
   root.innerHTML='';
   candidates.forEach((x,i)=>{
-    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),imgs=imageCandidates(x),style=pickPostStyle(x,infer(cleanName(x.itemName))),el=document.createElement('article');
+    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),imgs=imageCandidates(x),style=pickPostStyle(x,itemProfile(x)),el=document.createElement('article');
     el.className='card';
     el.id='card-'+rank;
     el.innerHTML=
