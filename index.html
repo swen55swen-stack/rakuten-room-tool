@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V34</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V35</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V34</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V35</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V34の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V35の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V34：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV34を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V35：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV35を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V34は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V35は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -243,7 +243,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV34Month-'+monthKey()}
+function monthStoreKey(){return 'roomV35Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -528,17 +528,67 @@ function featureText(features){
   const descs=features.slice(0,3).map(v=>v.desc).join('。');
   return names+'など、気になる特徴がいくつかあります。'+descs+'。';
 }
+function stablePick(x,arr){
+  const key=String(x.itemCode||x.itemName||'');
+  const n=[...key].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return arr[Math.abs(n)%arr.length];
+}
 function talkHook(x,info){
   const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
-  if(/プロテイン|ホエイ|ソイ/.test(t)) return 'プロテインって、結局「続けやすい味かどうか」がかなり大事じゃないですか？👀';
-  if(/掛け布団|布団|毛布|寝具/.test(t)) return '寒くなってから「もっと早く布団見ておけばよかった…」ってなりがちじゃないですか？';
-  if(/収納|ラック|ケース|ボックス/.test(t)) return '気づくと物が増えて、置き場所に困ることありません？';
-  if(/掃除|クリーナ|モップ|ブラシ/.test(t)) return '掃除って、少しでもラクになる道具があると助かりますよね。';
-  if(/キッチン|フライパン|鍋|調理|水切/.test(t)) return '毎日使うキッチングッズ、ちょっと使いやすいだけでかなり違いますよね。';
-  if(/美容|コスメ|化粧|美容液|シャンプ/.test(t)) return '美容アイテムって、気になるけど「自分に合うかな？」って迷いません？';
-  if(/旅行|宿泊|ホテル|旅館|温泉/.test(t)) return '次の休み、どこか行きたいなって思ってません？✈️';
-  if(/インテリア|照明|ラグ|カーテン|ソファ/.test(t)) return '部屋の雰囲気、ひとつ変えるだけで結構気分変わりますよね。';
-  return 'これ、ちょっと気になりません？👀';
+
+  if(/プロテイン|ホエイ|ソイ/.test(t)){
+    return stablePick(x,[
+      '「プロテイン、味で失敗したくない…」って思ったことありません？👀',
+      '毎日飲むなら、成分だけじゃなく“飲み続けられる味”も大事ですよね。',
+      'チョコ系プロテインが好きなら、これはちょっと見てほしいです🍫',
+      'トレーニング後の1杯、せっかくなら楽しみにできる味がいいですよね。',
+      'プロテイン選びって、結局「味・飲みやすさ・続けやすさ」のバランスじゃないですか？',
+      'いつものプロテイン、ちょっと飽きてきてません？👀',
+      '甘いものが好きだけど、たんぱく質もちゃんと取りたい人へ。',
+      '「これなら続けられそう」って思えるプロテインを探してる人に気になる一本です。'
+    ]);
+  }
+  if(/掛け布団|布団|毛布|寝具/.test(t)) return stablePick(x,[
+    '寒くなってから「もっと早く布団見ておけばよかった…」ってなりがちじゃないですか？',
+    '朝、布団から出たくなくなる季節が近づいてきましたね🥶',
+    '冬の寝具、あたたかさだけじゃなく手入れのしやすさも大事ですよね。'
+  ]);
+  if(/収納|ラック|ケース|ボックス/.test(t)) return stablePick(x,[
+    '気づくと物が増えて、置き場所に困ることありません？',
+    '「ここにちょうど置ける収納が欲しい」って場所、ありますよね。',
+    '片付けてもすぐ散らかる場所、ひとつくらいありません？'
+  ]);
+  if(/掃除|クリーナ|モップ|ブラシ/.test(t)) return stablePick(x,[
+    '掃除って、少しでもラクになる道具があると助かりますよね。',
+    '面倒な掃除ほど、道具ひとつでかなり変わると思いません？',
+    '「あとで掃除しよう」が溜まりがちな場所に良さそうです。'
+  ]);
+  if(/キッチン|フライパン|鍋|調理|水切/.test(t)) return stablePick(x,[
+    '毎日使うキッチングッズ、ちょっと使いやすいだけでかなり違いますよね。',
+    '料理の小さな手間、ひとつ減るだけでもかなり助かりません？',
+    'キッチン用品って、結局“毎日使いやすいか”が一番大事ですよね。'
+  ]);
+  if(/美容|コスメ|化粧|美容液|シャンプ/.test(t)) return stablePick(x,[
+    '美容アイテムって、気になるけど「自分に合うかな？」って迷いません？',
+    '毎日使うものだからこそ、使い心地って結構大事ですよね。',
+    'これ、いつものケアを少し変えたい人に気になるアイテムです。'
+  ]);
+  if(/旅行|宿泊|ホテル|旅館|温泉/.test(t)) return stablePick(x,[
+    '次の休み、どこか行きたいなって思ってません？✈️',
+    'たまにはちょっと遠出したくなる時ありますよね。',
+    '次の旅行先、まだ決まってないなら候補に入れてみても良さそうです。'
+  ]);
+  if(/インテリア|照明|ラグ|カーテン|ソファ/.test(t)) return stablePick(x,[
+    '部屋の雰囲気、ひとつ変えるだけで結構気分変わりますよね。',
+    'お部屋をちょっとだけ変えたい時、こういうアイテム気になりません？',
+    '毎日見る場所だから、インテリアは少しこだわりたくなりますよね。'
+  ]);
+  return stablePick(x,[
+    'これ、ちょっと気になりません？👀',
+    'ランキングを見てたら、思わず止まったアイテムです。',
+    'こういうの、探してた人いそうだなと思ってチェックしました。',
+    '派手じゃないけど、じわっと便利そうなアイテム見つけました。'
+  ]);
 }
 function benefitTalk(features,info){
   if(features.length){
@@ -567,6 +617,49 @@ function buildPostBody(x,info,style){
   const hook=talkHook(x,info);
   const benefit=benefitTalk(features,info);
   const reviewStrong=strongReviewText(x);
+  const allText=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
+  const isProtein=/プロテイン|ホエイ|ソイ/.test(allText);
+
+  if(isProtein){
+    const flavor =
+      /チョコ/.test(allText)?'チョコ系の味':
+      /バナナ/.test(allText)?'バナナ系の味':
+      /抹茶/.test(allText)?'抹茶系の味':
+      /ミルクティー/.test(allText)?'ミルクティー系の味':
+      /ストロベリー|いちご/.test(allText)?'いちご系の味':
+      '続けやすそうな味';
+    const type =
+      /wpc|ホエイ/.test(allText)?'ホエイタイプ':
+      /ソイ/.test(allText)?'ソイタイプ':
+      'プロテイン';
+    const intro=stablePick(x,[
+      flavor+'が好きな人なら、まず味のところから気になる商品。',
+      '毎日飲むものだから、成分だけじゃなく「ちゃんと続けられるか」も大事。',
+      'トレーニング後だけじゃなく、忙しい日のたんぱく質補給にも使いやすそう。',
+      'プロテインは結局、飲む回数が増えるほど“飽きにくさ”が大事になってきますよね。'
+    ]);
+    const extra=stablePick(x,[
+      type+'なので、筋トレ後のたんぱく質補給を意識している人にも候補にしやすいです。',
+      '味が合えば毎日の習慣にしやすいので、甘い系が好きな人はチェックしておきたいところ。',
+      'いつもの味に飽きてきた人や、初めてチョコ系を試したい人にも気になる選択肢です。',
+      '容量と価格のバランスも含めて、普段飲んでいるものと比べながら選ぶのが良さそうです。'
+    ]);
+    const saleLine=sale?'\n🔥 '+sale:'';
+    const reviewLine=reviewStrong?'\n'+reviewStrong:'';
+    return `${hook}
+
+${name}
+
+${intro}
+${extra}
+${benefit}
+
+「味で妥協したくない」「毎日無理なく続けたい」人には、かなり相性を見てみたくなるプロテインだと思います。${saleLine}${reviewLine}
+
+💰 価格：${price}
+
+味・容量・栄養成分・1回あたりの量まで商品ページで比べてみてください◎`;
+  }
 
   let middle='';
   if(style==='sale'){
@@ -593,6 +686,8 @@ ${benefit}
 ${info.pain}なら、かなり気になる候補だと思います。
 
 ${middle}${reviewLine}
+
+使う場面をイメージしながら見ると、自分に合うか判断しやすいです。
 
 💰 価格：${price}
 
