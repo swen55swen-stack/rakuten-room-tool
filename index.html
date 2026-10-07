@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V25</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V26</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V25</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V26</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V25の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V26の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V25：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV25を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V26：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV26を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ハッシュタグは商品名・説明文の内容に合わせて自動生成します。V25は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V26は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -209,7 +209,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV25Month-'+monthKey()}
+function monthStoreKey(){return 'roomV26Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -496,6 +496,7 @@ async function research(){
     keyword=document.getElementById('keyword').value.trim(),
     pages=Number(document.getElementById('pages').value||3),
     genre=document.getElementById('genreId').value.trim(),
+    genreLabel=document.getElementById('genreId').selectedOptions?.[0]?.textContent?.trim()||'',
     periodChoice=document.getElementById('period').value,
     mode=document.getElementById('mode').value,
     saleOnly=document.getElementById('saleOnly').value==='1',
@@ -512,9 +513,12 @@ async function research(){
     let activeQuery='';
 
     if(searchType==='theme' || searchType==='word'){
-      const query=searchType==='word'?keyword:theme;
+      let query=searchType==='word'?keyword:theme;
+      if(searchType==='word' && !query && genre){
+        query=genreLabel.replace(/・/g,' ');
+      }
       activeQuery=query;
-      if(!query)throw new Error(searchType==='word'?'検索したいワードを入力してください。':'おすすめテーマを選んでください。');
+      if(!query)throw new Error(searchType==='word'?'検索ワードを入力するか、ジャンルを選んでください。':'おすすめテーマを選んでください。');
       all=await themeSearch(app,key,affiliate,query,pages,min,max,genre);
     }else{
       const apiPeriod=periodChoice==='realtime'?'realtime':'';
@@ -575,7 +579,7 @@ async function research(){
     render();
 
     const modeName={mix:'おまかせミックス',hidden:'穴場重視',click:'クリック期待',chappy:'チャッピーおすすめ'}[mode];
-    const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+keyword+'」':'ランキング';
+    const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+(keyword||genreLabel)+'」':'ランキング';
     const targetName=target==='female'?'女性向け厳格フィルター':target==='male'?'男性向け厳格フィルター':'男女指定なし';
     status('完了：'+sourceName+(genre?' × ジャンルID '+genre:' × 全ジャンル')+' × '+targetName+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
   }catch(e){
