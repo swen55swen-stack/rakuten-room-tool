@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>楽天ROOM 自動リサーチ＋連続投稿 V31</title>
+<style>
+:root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI","Yu Gothic UI",sans-serif;color:#222}
+header{background:linear-gradient(135deg,var(--red),var(--pink));color:#fff;padding:20px 16px}
+.wrap{max-width:1050px;margin:auto}
+h1{font-size:25px;margin:0} .sub{margin-top:6px;opacity:.94}
+main{max-width:1050px;margin:18px auto;padding:0 14px 70px}
+.panel,.card{background:#fff;border-radius:16px;box-shadow:0 2px 14px rgba(0,0,0,.07)}
+.panel{padding:17px;margin-bottom:14px}
+.panel h2{font-size:18px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label{display:block;font-size:13px;color:#555;font-weight:700;margin-bottom:5px}
+input,select{width:100%;padding:10px;border:1px solid #ccc;border-radius:9px;background:#fff}
+.help{font-size:12px;color:#666;line-height:1.55;margin-top:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button,.btnlink{border:0;border-radius:9px;padding:11px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}
+.primary{background:var(--red);color:#fff} .green{background:var(--green);color:#fff} .gray{background:#555;color:#fff} .blue{background:var(--blue);color:#fff}
+.statusbox{margin-top:11px;padding:10px 12px;border-radius:9px;background:#f3f5f7;font-size:13px;white-space:pre-wrap}
+.warning{background:#fff6df;border:1px solid #ffd483;padding:12px 14px;border-radius:11px;font-size:13px;line-height:1.6;margin-bottom:14px}
+.book{background:#eef6ff;border:1px solid #a9cdfc;padding:14px;border-radius:11px;line-height:1.6}
+.book a{background:var(--red);color:#fff;border-radius:9px;padding:10px 16px;font-weight:800;text-decoration:none;display:inline-block;margin-top:8px}
+.progress{background:#fff;padding:12px 14px;border-radius:12px;margin:14px 0;box-shadow:0 2px 10px rgba(0,0,0,.05);display:none}
+.progress .row{display:flex;justify-content:space-between;font-weight:800;font-size:14px}
+.bar{height:8px;background:#eee;border-radius:999px;overflow:hidden;margin-top:7px} .bar>div{height:100%;width:0;background:var(--green)}
+.card{padding:15px;margin:13px 0;border:2px solid transparent}
+.card.done{opacity:.68;border-color:#b7dec4;background:#f9fffa}
+.top{display:flex;gap:12px;align-items:center}
+.rank{min-width:50px;height:50px;border-radius:999px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900}
+.thumb{width:90px;height:90px;object-fit:cover;border-radius:10px;background:#eee}
+.meta{flex:1;min-width:0} .meta h3{margin:0 0 4px;font-size:17px;line-height:1.4} .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{background:#f0f1f3;border-radius:999px;padding:4px 8px;font-size:12px}
+.score{background:#fff0f3;color:#a40025;font-weight:900}
+textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;border-radius:10px;padding:12px;line-height:1.6;background:#fafafa}
+.promoBox{margin-top:11px;padding:11px 12px;background:#fff7fa;border:1px solid #f3c5d3;border-radius:10px}
+.promoTitle{font-size:12px;font-weight:900;color:#a40025;margin-bottom:6px}
+.thumbIdeas{display:flex;gap:6px;flex-wrap:wrap}
+.imageChoices{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.imageChoice{width:92px;height:92px;object-fit:cover;border-radius:10px;border:2px solid #eee;background:#fff}
+.imageHint{font-size:12px;color:#666;margin-top:6px}
+.thumbIdea{background:#fff;border:1px solid #e2a8ba;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800}
+.recommendBox{margin-top:9px;padding:10px 12px;background:#f7f8fa;border-radius:10px;font-size:13px;line-height:1.65}
+.cardstatus{font-size:13px;color:#555;margin-top:8px;min-height:18px}
+.empty{text-align:center;padding:32px;color:#777}
+@media(max-width:700px){.grid{grid-template-columns:1fr} .top{align-items:flex-start} .thumb{width:72px;height:72px} h1{font-size:21px}}
+</style>
+<!-- force-pages-redeploy-v24 -->
+</head>
+<body>
+<header>
+<div class="wrap">
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V31</h1>
+<div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
+</div>
+</header>
+
+<main>
+<div class="warning">
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V31の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+</div>
+<div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
+<b>V31：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV31を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+</div>
+
+<section class="panel">
+<h2>① 初回設定</h2>
+<div class="grid">
+<div><label>楽天 Application ID</label><input id="appId" placeholder="楽天Web ServiceのApplication ID"></div>
+<div><label>楽天 Access Key</label><input id="accessKey" type="password" placeholder="Access Key"></div>
+<div><label>Affiliate ID（任意）</label><input id="affiliateId" placeholder="使う場合だけ"></div>
+<div><label>探し方</label><select id="searchType">
+<option value="ranking">ランキングから探す</option>
+<option value="theme">テーマから探す</option><option value="word">ワード検索</option>
+</select></div>
+<div><label>おすすめテーマ</label><select id="theme">
+<option value="">テーマ指定なし</option>
+<option value="子育て 便利グッズ">子育て世代</option>
+<option value="女性 便利グッズ">女性向け便利グッズ</option>
+<option value="一人暮らし 女性 便利">女性一人暮らし</option>
+<option value="一人暮らし 男性 便利">男性一人暮らし</option>
+<option value="メンズ インテリア おしゃれ">男性インテリア</option>
+<option value="筋トレ トレーニング">筋トレグッズ</option>
+<option value="プロテイン ホエイ">プロテイン</option>
+<option value="収納 家事ラク 便利">収納・家事ラク</option>
+<option value="キッチン 時短 便利">キッチン時短</option>
+<option value="掃除 便利グッズ">掃除便利グッズ</option>
+</select></div>
+<div><label>自由ワード検索</label><input id="keyword" placeholder="例：着る毛布 / 北欧 インテリア / プロテイン バナナ味"></div>
+<div><label>ジャンル</label><select id="genreId">
+<option value="">全ジャンル</option>
+<option value="562637">家電</option>
+<option value="558944">キッチン用品</option>
+<option value="215783">日用品雑貨・文房具・手芸</option>
+<option value="100939">美容・コスメ・香水</option>
+<option value="100371">レディースファッション</option>
+<option value="551177">メンズファッション</option>
+<option value="101213">ペット・ペットグッズ</option>
+<option value="101070">スポーツ・アウトドア</option>
+<option value="100804">インテリア・寝具・収納</option>
+<option value="100227">食品</option>
+<option value="551167">スイーツ・お菓子</option>
+<option value="100533">キッズ・ベビー・マタニティ</option>
+<option value="566382">おもちゃ</option>
+<option value="564500">スマートフォン・タブレット</option>
+</select></div>
+<div><label>期間</label><select id="period">
+<option value="">デイリー</option>
+<option value="realtime">リアルタイム</option>
+<option value="monthly">今月の注目（このPCで蓄積）</option>
+</select></div>
+<div><label>商品選定モード</label><select id="mode">
+<option value="mix">おまかせミックス</option>
+<option value="hidden">穴場重視</option>
+<option value="click">クリック期待</option>
+<option value="chappy">チャッピーおすすめ</option>
+</select></div>
+<div><label>セール絞り込み</label><select id="saleOnly">
+<option value="0">すべて</option>
+<option value="1">セール中の商品だけ</option>
+</select></div>
+<div><label>候補を調べるページ数</label><select id="pages"><option value="2">60件前後</option><option value="3" selected>90件前後</option><option value="4">120件前後</option></select></div>
+<div><label>最低価格</label><input id="minPrice" type="number" value="800"></div>
+<div><label>最高価格</label><input id="maxPrice" type="number" value="20000"></div>
+</div>
+<div class="actions">
+<button class="gray" onclick="saveSettings()">設定をこのPCに保存</button>
+<button class="blue" onclick="testConnection()">API接続テスト</button>
+<button class="primary" onclick="research()">今日の10件を作る</button>
+<a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
+</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V31は入力値をこのブラウザ内にだけ保存できます。</div>
+<div id="mainStatus" class="statusbox">まだ取得していません。</div>
+</section>
+
+<section class="panel">
+<h2>② ROOMボタンを探す手間を減らす</h2>
+<div class="book">
+初回だけ、下の赤い「ROOM投稿へ」をEdgeのお気に入りバーへドラッグしてください。<br>
+商品ページを開いた後、このお気に入りを1回押すとページ内のROOMボタンを探します。<br>
+<a href="javascript:(()=&gt;{const els=[...document.querySelectorAll(&#x27;a,button,[role=&quot;button&quot;]&#x27;)];const txt=e=&gt;((e.innerText||e.textContent||e.getAttribute(&#x27;aria-label&#x27;)||&#x27;&#x27;)+&#x27; &#x27;+(e.getAttribute(&#x27;title&#x27;)||&#x27;&#x27;)).trim();const el=els.find(e=&gt;/ROOM/i.test(txt(e))||/room\.rakuten\.co\.jp/i.test(e.href||&#x27;&#x27;));if(el){el.scrollIntoView({behavior:&#x27;smooth&#x27;,block:&#x27;center&#x27;});setTimeout(()=&gt;el.click(),500)}else{alert(&#x27;ROOMボタンが見つかりません。商品ページを少し下へスクロールして、もう一度押してください。&#x27;)}})()">ROOM投稿へ</a>
+</div>
+</section>
+
+<div class="progress" id="progress">
+<div class="row"><span id="progressText">0 / 10 投稿済み</span><span id="progressPct">0%</span></div>
+<div class="bar"><div id="progressBar"></div></div>
+</div>
+
+<div id="results"><div class="empty">「今日の10件を作る」を押すとここに候補が並びます。</div></div>
+</main>
+
+<script>
+const SETTINGS='roomV11Settings';
+const DONE='roomV11Done';
+let candidates=[];
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function yen(n){return Number(n||0).toLocaleString('ja-JP')+'円'}
+function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS)||'{}');['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>{if(s[k]!==undefined)document.getElementById(k).value=s[k]})}catch(e){}}
+function saveSettings(){const s={};['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);localStorage.setItem(SETTINGS,JSON.stringify(s));status('設定をこのPCのブラウザに保存しました。')}
+function status(t){document.getElementById('mainStatus').textContent=t}
+function redactUrl(url){try{const u=new URL(url);if(u.searchParams.has('accessKey'))u.searchParams.set('accessKey','***');if(u.searchParams.has('applicationId'))u.searchParams.set('applicationId',u.searchParams.get('applicationId').slice(0,8)+'…');return u.toString()}catch(e){return '(URL解析不可)'}}
+async function fetchApi(url){const res=await fetch(url,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});const raw=await res.text();let data=null;try{data=JSON.parse(raw)}catch(e){}if(!res.ok){const msg=data?.error_description||data?.error||raw.slice(0,300)||('HTTP '+res.status);throw new Error('HTTP '+res.status+'：'+msg)}if(!data)throw new Error('楽天APIの応答をJSONとして解析できませんでした。');return data}
+function jsonp(url){return new Promise((resolve,reject)=>{const cb='rrcb_'+Date.now()+'_'+Math.floor(Math.random()*99999);const script=document.createElement('script');let called=false;const timer=setTimeout(()=>{cleanup();reject(new Error('JSONPが15秒以内に応答しませんでした'))},15000);function cleanup(){clearTimeout(timer);try{delete window[cb]}catch(e){};script.remove()}window[cb]=(data)=>{called=true;cleanup();resolve(data)};script.onload=()=>{if(!called){setTimeout(()=>{if(!called){cleanup();reject(new Error('JSONPスクリプトは読み込めましたが、callbackが実行されませんでした'))}},100)}};script.onerror=()=>{cleanup();reject(new Error('JSONPスクリプトの読み込みに失敗しました（403/許可サイト/CSP等の可能性）'))};script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(cb);document.head.appendChild(script)})}
+async function callRakuten(url){let fetchErr='';try{const data=await fetchApi(url);return {data,method:'fetch'}}catch(e){fetchErr=e.message||String(e)}try{const data=await jsonp(url);return {data,method:'jsonp',fetchErr}}catch(e){throw new Error('fetch: '+fetchErr+' / JSONP: '+(e.message||e)+' / URL: '+redactUrl(url))}}
+function itemArray(data){let arr=data?.items||data?.Items||[];return arr.map(x=>x?.item||x?.Item||x).filter(Boolean)}
+function opportunityScore(x){const rank=Number(x.rank||999),reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0),aff=Number(x.affiliateRate||0);let s=0;s+=Math.max(0,55-(rank*.55));if(reviews<=5)s+=38;else if(reviews<=20)s+=34;else if(reviews<=50)s+=30;else if(reviews<=100)s+=26;else if(reviews<=300)s+=20;else if(reviews<=800)s+=12;else if(reviews<=2000)s+=6;if(price>=1000&&price<=5000)s+=15;else if(price>5000&&price<=10000)s+=11;else if(price>10000&&price<=20000)s+=7;else if(price<1000)s+=6;if(avg>=4.3)s+=6;else if(avg>=4)s+=4;if(Number(x.availability??1)===1)s+=4;if((x.mediumImageUrls||[]).length)s+=3;s+=Math.min(8,aff*1.5);return Math.round(s)}
+
+function isApiSaleActive(x){
+  if(!x.startTime || !x.endTime) return false;
+  const s=new Date(String(x.startTime).replace(' ','T'));
+  const e=new Date(String(x.endTime).replace(' ','T'));
+  const now=new Date();
+  return !isNaN(s)&&!isNaN(e)&&now>=s&&now<=e;
+}
+function saleText(x){
+  return (String(x.itemName||'')+' '+String(x.catchcopy||'')).replace(/\s+/g,' ');
+}
+function hasSaleText(x){
+  const t=saleText(x);
+  return /(?:sale|セール|\d{1,2}\s*%\s*off|offクーポン|クーポン(?:配布|利用|対象|あり|で)|ポイント\s*\d+\s*倍|期間限定|お買い得|タイムセール)/i.test(t);
+}
+function isOnSale(x){
+  return isApiSaleActive(x) || hasSaleText(x);
+}
+function saleEndLabel(x){
+  if(isApiSaleActive(x) && x.endTime){
+    const m=String(x.endTime).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m)return Number(m[2])+'月'+Number(m[3])+'日までSALE';
+  }
+  const t=saleText(x);
+  let m=t.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日(?:[^\d]{0,8})?(?:まで|迄)/);
+  if(m)return Number(m[1])+'月'+Number(m[2])+'日までSALE';
+  m=t.match(/(\d{1,2})\s*\/\s*(\d{1,2})(?:\([^)]*\))?(?:[^\d]{0,10})?(?:まで|迄)/);
+  if(m)return Number(m[1])+'月'+Number(m[2])+'日までSALE';
+  m=t.match(/(?:まで|迄)[^\d]{0,5}(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+  if(m)return Number(m[1])+'月'+Number(m[2])+'日までSALE';
+  if(/クーポン/i.test(t)){
+    const pct=t.match(/(\d{1,2})\s*%\s*off/i);
+    return pct ? pct[1]+'%OFFクーポン' : 'クーポン対象';
+  }
+  const pct=t.match(/(\d{1,2})\s*%\s*off/i);
+  if(pct)return pct[1]+'%OFF';
+  if(/ポイント\s*\d+\s*倍/i.test(t)){
+    const p=t.match(/ポイント\s*(\d+)\s*倍/i);
+    if(p)return 'ポイント'+p[1]+'倍';
+  }
+  return hasSaleText(x)?'SALE中':'';
+}
+function clickScore(x){
+  const rank=Number(x.rank||999), reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0), price=Number(x.itemPrice||0);
+  let s=0;
+  s+=Math.max(0,70-rank*0.75);
+  if(reviews>=5000)s+=18; else if(reviews>=1000)s+=15; else if(reviews>=300)s+=11; else if(reviews>=50)s+=7;
+  if(avg>=4.6)s+=12; else if(avg>=4.4)s+=9; else if(avg>=4.2)s+=6;
+  if(price>=1000&&price<=5000)s+=14; else if(price<=10000)s+=9; else if(price<=20000)s+=5;
+  if(isOnSale(x))s+=15;
+  if(Number(x.pointRate||1)>=3)s+=7;
+  if((x.mediumImageUrls||[]).length)s+=4;
+  return Math.round(s);
+}
+function chappyScore(x){
+  const name=String(x.itemName||''), cap=String(x.catchcopy||'')+' '+String(x.itemCaption||'');
+  const reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0), rank=Number(x.rank||999);
+  let s=0;
+  const handy=/隙間|収納|折りたた|時短|水切|スタンド|ホルダー|ラック|掃除|ブラシ|クリーナ|ケース|カバー|保存|充電|乾燥|省スペース|滑り止め|防水|マグネット|伸縮|2WAY|3WAY|コンパクト|コードレス|自動|ワンタッチ/i;
+  const pain=/面倒|ラク|簡単|便利|すっきり|省スペース|時短|手軽|ストレス|片付|衛生|持ち運び/i;
+  if(handy.test(name))s+=35;
+  if(pain.test(cap))s+=20;
+  if(avg>=4.4)s+=18; else if(avg>=4.2)s+=12;
+  if(reviews>=20&&reviews<=1500)s+=14; else if(reviews<20)s+=8;
+  if(rank>=8&&rank<=80)s+=10;
+  if(Number(x.itemPrice||0)<=5000)s+=10;
+  if(isOnSale(x))s+=5;
+  return Math.round(s);
+}
+function monthKey(){
+  const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function monthStoreKey(){return 'roomV31Month-'+monthKey()}
+function updateMonthlyHistory(items){
+  let h={};
+  try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
+  items.forEach(x=>{
+    if(!x.itemCode)return;
+    const old=h[x.itemCode]||{count:0,bestRank:999,last:null,item:null};
+    old.count++;
+    old.bestRank=Math.min(old.bestRank,Number(x.rank||999));
+    old.last=new Date().toISOString();
+    old.item=x;
+    h[x.itemCode]=old;
+  });
+  localStorage.setItem(monthStoreKey(),JSON.stringify(h));
+  return h;
+}
+function monthlyScore(x,h){
+  const m=h[x.itemCode]||{count:1,bestRank:Number(x.rank||999)};
+  return Math.round((m.count*18)+Math.max(0,55-(m.bestRank*.55))+clickScore(x)*0.35);
+}
+function finalScore(x,mode,h){
+  const hidden=opportunityScore(x), click=clickScore(x), chap=chappyScore(x), monthly=monthlyScore(x,h);
+  x._hidden=hidden; x._click=click; x._chappy=chap; x._monthly=monthly;
+  if(mode==='hidden')return hidden;
+  if(mode==='click')return click;
+  if(mode==='chappy')return chap;
+  return Math.round(hidden*.30+click*.35+chap*.25+monthly*.10);
+}
+function cleanName(name){return String(name||'').replace(/【[^】]*】/g,' ').replace(/[＼／]/g,' ').replace(/\s+/g,' ').trim().slice(0,72)}
+function infer(name){
+  const n=String(name||'');
+  if(/掃除|クリーナ|ブラシ|モップ|洗剤|ワイパ/.test(n))return {
+    cat:'掃除', pain:'「掃除したいけど面倒…」を少しラクにしたい人に',
+    benefit:'細かい場所や毎日の掃除に取り入れやすそう',
+    tags:'#掃除グッズ #家事ラク #時短家事 #便利グッズ #大掃除 #掃除用品 #主婦の味方 #暮らしを整える',
+    thumbs:['これ地味に助かる','掃除がラクになる','もっと早く知りたかった']
+  };
+  if(/収納|ラック|ケース|チェスト|ハンガ|米びつ|ワゴン/.test(n))return {
+    cat:'収納', pain:'「片付けてもすぐ散らかる…」が気になる人に',
+    benefit:'ごちゃつきやすい場所をスッキリ見せるのに良さそう',
+    tags:'#収納 #整理収納 #収納アイデア #片付け #暮らしを整える #生活感を隠す #家事ラク #主婦の味方',
+    thumbs:['ごちゃつき解消','これでスッキリ','収納の正解かも']
+  };
+  if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(n))return {
+    cat:'寝具',
+    pain:'寒い夜をあたたかく、気持ちよく眠りたい人に',
+    benefit:'冬の寝室づくりや冷え対策に取り入れやすそう',
+    tags:'#掛け布団 #寝具 #あったか寝具 #冬支度 #冷え対策 #快眠 #寝室 #おうち時間',
+    thumbs:['冬の寝具これ','あったか快眠','寒い夜に']
+  };
+  if(/加湿|暖房|ヒータ|こたつ|湯たんぽ/.test(n))return {
+    cat:'秋冬', pain:'寒い季節のおうち時間を快適にしたい人に',
+    benefit:'秋冬の冷え対策やおうち時間に取り入れやすそう',
+    tags:'#秋冬支度 #冬支度 #あったかグッズ #冷え対策 #おうち時間 #防寒対策 #暮らしを整える #季節のおすすめ',
+    thumbs:['秋冬これ欲しい','冷え対策に','おうち時間快適']
+  };
+  if(/キッチン|フライパン|鍋|保存|食洗|調理|包丁|まな板|水切|タンブラー/.test(n))return {
+    cat:'キッチン', pain:'毎日の料理や片付けを少しでもラクにしたい人に',
+    benefit:'キッチンの小さなストレスを減らしてくれそう',
+    tags:'#キッチングッズ #家事ラク #時短家事 #料理好き #自炊生活 #主婦の味方 #便利グッズ #暮らしのアイデア',
+    thumbs:['家事ラク発見','キッチンで活躍','これ便利そう']
+  };
+  if(/バッグ|リュック|財布|スニーカー|靴|ワンピ|シャツ|ブラ|トップス|パンツ/.test(n))return {
+    cat:'ファッション', pain:'普段使いしやすくて、ちゃんと使えるものを探している人に',
+    benefit:'日常コーデやお出かけに取り入れやすそう',
+    tags:'#ファッション #大人カジュアル #30代ファッション #40代ファッション #お出かけコーデ #普段使い #楽天ファッション #買い物',
+    thumbs:['大人にちょうどいい','普段使いに◎','これ使いやすそう']
+  };
+  if(/ドライヤ|美容|化粧|コスメ|シャンプ|ヘア|美容液|クリーム|クレンジング/.test(n))return {
+    cat:'美容', pain:'毎日のケアを無理なく続けたい人に',
+    benefit:'いつもの美容ルーティンに取り入れやすそう',
+    tags:'#美容 #美容グッズ #おうち美容 #30代美容 #40代美容 #自分磨き #スキンケア #ヘアケア',
+    thumbs:['大人美容に','毎日ケアに','これ気になる']
+  };
+  if(/ベビー|キッズ|子供|こども|おむつ|抱っこ|入園|通園/.test(n))return {
+    cat:'子育て', pain:'子育て中の「ちょっと大変」を減らしたい人に',
+    benefit:'毎日の準備やお世話を少しラクにしてくれそう',
+    tags:'#子育て #育児グッズ #ママにおすすめ #子育て便利グッズ #時短育児 #暮らしのアイデア #楽天ママ割 #買ってよかった',
+    thumbs:['ママこれ助かる','育児ラクに','あると便利']
+  };
+  if(/スマホ|イヤホン|PC|充電|モバイル|家電|ケーブル/.test(n))return {
+    cat:'家電・ガジェット', pain:'毎日使うものだから、使いやすさを上げたい人に',
+    benefit:'普段使いのちょっとした不便を減らしてくれそう',
+    tags:'#家電 #ガジェット #便利アイテム #スマホグッズ #暮らし #時短 #楽天市場 #買い物',
+    thumbs:['これ便利','毎日使いたい','あると助かる']
+  };
+  if(/旅行|宿泊|ホテル|旅館|トラベル|クーポン|宿泊券|旅行券|チケット|ふるさと納税|温泉|観光/.test(n))return {
+    cat:'旅行・おでかけ',
+    pain:'次の旅行やおでかけ先を探している人に',
+    benefit:'週末旅行やごほうび旅の候補としてチェックしたい内容',
+    tags:'#旅行 #国内旅行 #ホテル #旅館 #温泉旅行 #おでかけ #週末旅行 #楽天トラベル #ふるさと納税 #旅行好き',
+    thumbs:['次の旅候補に','週末旅に','旅行好き必見']
+  };
+  return {
+    cat:'暮らし', pain:'「これ便利そう」が好きな人に',
+    benefit:'毎日の暮らしに取り入れやすそうなアイテム',
+    tags:'#便利グッズ #暮らしを整える #生活雑貨 #家事ラク #暮らしのアイデア #主婦の味方 #おすすめ商品 #おうち時間',
+    thumbs:['これ気になる','暮らしがラクに','見つけた便利品']
+  };
+}
+function reviewLine(x){
+  const c=Number(x.reviewCount||0), a=Number(x.reviewAverage||0);
+  if(c>0&&a>0)return 'レビュー'+c.toLocaleString('ja-JP')+'件・評価'+a.toFixed(2)+'。数字もチェックしながら選びたいアイテムです。';
+  if(c>0)return 'レビュー'+c.toLocaleString('ja-JP')+'件。実際の購入者の声も確認して選びたいアイテムです。';
+  return 'レビュー情報は商品ページで確認してから選びたいアイテムです。';
+}
+
+function hashtagProfile(x){
+  const name=String(x.itemName||'').toLowerCase();
+  const catchcopy=String(x.catchcopy||'').toLowerCase();
+  const text=name+' '+catchcopy;
+  const tags=[];
+  const add=(...xs)=>xs.forEach(t=>{if(t&&!tags.includes(t))tags.push(t)});
+  const addTag=t=>{
+    const clean=String(t||'').replace(/[\s　・,/／【】［］()（）]+/g,'').trim();
+    if(clean.length>=2 && clean.length<=18) add('#'+clean);
+  };
+
+  // 共通タグは最小限
+  add('#楽天ROOM','#楽天市場');
+
+  // 商品固有キーワードを優先
+  const keywordRules = [
+    [/シンサレート/,['シンサレート']],
+    [/フランネル/,['フランネル']],
+    [/ピーチスキン/,['ピーチスキン']],
+    [/洗える|丸洗い/,['洗える','丸洗いOK']],
+    [/蓄熱/,['蓄熱']],
+    [/抗菌/,['抗菌']],
+    [/防臭/,['防臭']],
+    [/速乾/,['速乾']],
+    [/軽量/,['軽量']],
+    [/撥水/,['撥水']],
+    [/防水/,['防水']],
+    [/折りたたみ/,['折りたたみ']],
+    [/省スペース/,['省スペース']],
+    [/コードレス/,['コードレス']],
+    [/ワンタッチ/,['ワンタッチ']],
+    [/自動/,['自動']],
+    [/マグネット/,['マグネット']],
+    [/伸縮/,['伸縮']],
+    [/2way/i,['2WAY']],
+    [/3way/i,['3WAY']],
+    [/北欧/,['北欧インテリア']],
+    [/韓国/,['韓国インテリア']],
+    [/木目/,['木目調']],
+    [/ホエイ/,['ホエイプロテイン']],
+    [/ソイ/,['ソイプロテイン']],
+    [/プロテイン/,['プロテイン']],
+    [/高たんぱく|高タンパク/,['高たんぱく']],
+    [/バナナ/,['バナナ味']],
+    [/チョコ/,['チョコ味']],
+    [/抹茶/,['抹茶味']],
+    [/ミルクティー/,['ミルクティー味']],
+    [/無添加/,['無添加']],
+    [/国産/,['国産']],
+    [/オーガニック/,['オーガニック']],
+    [/時短/,['時短']],
+    [/大容量/,['大容量']],
+    [/コンパクト/,['コンパクト']],
+    [/静音/,['静音']],
+    [/保温/,['保温']],
+    [/保冷/,['保冷']]
+  ];
+  keywordRules.forEach(([re,vals])=>{if(re.test(text))vals.forEach(addTag)});
+
+  // カテゴリタグ
+  if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(text)){
+    add('#寝具','#掛け布団','#あったか寝具','#快眠','#冬支度','#寝室');
+  }else if(/掃除|クリーナ|ブラシ|モップ|ワイパ|洗剤/.test(text)){
+    add('#掃除グッズ','#家事ラク','#時短家事','#掃除用品','#暮らしを整える');
+  }else if(/収納|ラック|ケース|チェスト|ハンガ|ワゴン|ボックス/.test(text)){
+    add('#収納','#整理収納','#収納アイデア','#片付け','#生活雑貨');
+  }else if(/キッチン|フライパン|鍋|包丁|まな板|調理|水切|保存容器|タンブラー|食器/.test(text)){
+    add('#キッチングッズ','#時短家事','#料理好き','#自炊生活','#家事ラク');
+  }else if(/美容|コスメ|化粧|美容液|クリーム|クレンジング|シャンプ|トリートメント|ヘア/.test(text)){
+    add('#美容','#美容グッズ','#スキンケア','#ヘアケア','#おうち美容');
+  }else if(/プロテイン|ホエイ|ソイプロテイン|bcaa|eaa/.test(text)){
+    add('#筋トレ','#トレーニング','#ボディメイク','#たんぱく質','#宅トレ');
+  }else if(/ダンベル|筋トレ|トレーニング|腹筋|懸垂|ヨガ|フィットネス|ストレッチ/.test(text)){
+    add('#筋トレグッズ','#トレーニング','#フィットネス','#宅トレ','#運動習慣');
+  }else if(/旅行|宿泊|ホテル|旅館|トラベル|宿泊券|旅行券|温泉|観光|ふるさと納税/.test(text)){
+    add('#旅行','#国内旅行','#ホテル','#旅館','#温泉旅行','#楽天トラベル');
+  }else if(/インテリア|照明|ラグ|カーテン|ソファ|テーブル|チェア|ベッド|北欧/.test(text)){
+    add('#インテリア','#おしゃれインテリア','#部屋づくり','#一人暮らし','#暮らしを整える');
+  }else if(/ベビー|キッズ|子供|こども|おむつ|抱っこ|入園|通園|育児/.test(text)){
+    add('#子育て','#育児グッズ','#子育て便利グッズ','#時短育児','#ママにおすすめ');
+  }else if(/ワンピ|シャツ|トップス|パンツ|スカート|バッグ|財布|スニーカー|靴|ブラジャー|ファッション/.test(text)){
+    add('#ファッション','#大人カジュアル','#普段使い','#お出かけ','#楽天ファッション');
+  }else if(/スマホ|iphone|android|イヤホン|充電|モバイル|ケーブル|タブレット/.test(text)){
+    add('#スマホグッズ','#ガジェット','#便利アイテム','#家電');
+  }
+
+  // セール系
+  if(isOnSale(x)) add('#セール','#お買い得');
+  if(Number(x.pointRate||1)>=3) add('#ポイントアップ');
+
+  // ターゲット系は根拠がある場合のみ
+  if(/レディース|女性用|女性向け|ママ|主婦/.test(text)) add('#女性向け');
+  if(/メンズ|男性用|男性向け|紳士/.test(text)) add('#男性向け');
+
+  // 商品名からブランド・特徴らしい短語を補助抽出
+  const rawTokens=String(x.itemName||'')
+    .replace(/【[^】]*】/g,' ')
+    .replace(/[\[\]［］()（）「」『』]/g,' ')
+    .split(/[\s　・,/／|]+/)
+    .map(s=>s.trim())
+    .filter(s=>s.length>=3 && s.length<=14);
+  const stop=/送料無料|楽天|ランキング|ポイント|クーポン|限定|公式|人気|おすすめ|新品|新タイプ|選べる|セット|サイズ|カラー|sale|off/i;
+  for(const t of rawTokens){
+    if(tags.length>=18)break;
+    if(!stop.test(t) && /[ぁ-んァ-ヶ一-龠A-Za-z0-9]/.test(t)) addTag(t);
+  }
+
+  return tags.slice(0,18).join(' ');
+}
+function fit500(body,tagString){
+  const tags=String(tagString||'').split(/\s+/).filter(Boolean);
+  let out=body.trim();
+  for(const tag of tags){
+    const next=out+' '+tag;
+    if(next.length<=500) out=next;
+    else break;
+  }
+  if(out.length>500) out=out.slice(0,497)+'…';
+  return out;
+}
+function pickPostStyle(x,info){
+  const name=String(x.itemName||'');
+  const reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0);
+  if(isOnSale(x)) return 'sale';
+  if(info.cat==='旅行・おでかけ') return 'discovery';
+  if(info.cat==='寝具' || info.cat==='秋冬') return 'season';
+  if(reviews>=1000 && avg>=4.4) return 'review';
+  if(/収納|掃除|キッチン|時短|便利|省スペース/.test(name)) return 'problem';
+  if(Number(x.rank||999)<=10) return 'discovery';
+  const code=String(x.itemCode||name);
+  const sum=[...code].reduce((a,c)=>a+c.charCodeAt(0),0);
+  return ['empathy','comparison','discovery'][sum%3];
+}
+function buildPostBody(x,info,style){
+  const name=cleanName(x.itemName);
+  const rv=reviewLine(x);
+  const price=yen(x.itemPrice);
+  const sale=saleEndLabel(x);
+
+  if(style==='sale'){
+    return `【今チェックしておきたい👀】
+${name}
+
+${sale?'🔥 '+sale+'\n':''}${info.benefit}◎
+気になっていた人は、条件が変わる前に一度見ておきたいアイテム。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※価格・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='review'){
+    return `【レビュー多めで気になったアイテム👀】
+${name}
+
+${rv}
+口コミ数が多い商品は、良い点だけじゃなく気になる点も見つけやすいのが助かる◎
+${info.pain}チェックしておきたいです。
+
+💰 表示価格：${price}
+
+※仕様・在庫・送料は商品ページで確認してください。`;
+  }
+
+  if(style==='season'){
+    return `【季節が来る前にチェックしておきたい🍂】
+${name}
+
+${info.pain}✨
+${info.benefit}。
+季節ものは必要になってから探すと選択肢が減ることもあるので、今のうちに候補入り◎
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='problem'){
+    return `【こういう地味なストレス、減らしたい…！】
+${name}
+
+${info.pain}。
+${info.benefit}のが良さそう◎
+「毎回ちょっと面倒」を減らせるものって、結局出番が多い気がします。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='comparison'){
+    return `【これ、比較候補に入れておきたい👀】
+${name}
+
+${info.benefit}◎
+似た商品が多いジャンルだから、価格だけじゃなくレビューや使い方も見比べたいところ。
+${info.pain}候補のひとつとしてチェックしたいです。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  if(style==='empathy'){
+    return `【こういうの探してた人、多そう👀】
+${name}
+
+${info.pain}✨
+${info.benefit}のが気になるポイント。
+派手じゃないけど、毎日の使いやすさってこういうところで差が出そう◎
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+  }
+
+  return `【ランキングで見つけて気になった👀✨】
+${name}
+
+${info.pain}。
+${info.benefit}◎
+「こんなのあったんだ」と思える商品は、つい詳しく見たくなります。
+
+⭐ ${rv}
+💰 表示価格：${price}
+
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
+}
+function makeCopy(x){
+  const info=infer(cleanName(x.itemName));
+  const style=pickPostStyle(x,info);
+  const body=buildPostBody(x,info,style);
+  const tags=hashtagProfile(x);
+  return fit500(body+'\n\n',tags);
+}
+function thumbnailIdeas(x){return infer(cleanName(x.itemName)).thumbs}
+function recommendText(x){
+  const info=infer(cleanName(x.itemName));
+  const c=Number(x.reviewCount||0),a=Number(x.reviewAverage||0);
+  const rv=c&&a?'レビュー '+c.toLocaleString('ja-JP')+'件 / 評価 '+a.toFixed(2):'レビュー情報は商品ページで確認';
+  return '🎯 狙い：'+info.cat+'系｜'+info.pain+'\n📊 '+rv+'｜市場ランキング '+(x.rank||'-')+'位';
+}
+function imageUrl(x){const a=x.mediumImageUrls||x.smallImageUrls||[];if(!a.length)return '';const v=a[0];return typeof v==='string'?v:(v?.imageUrl||v?.url||'')}
+function directUrl(x){return x.affiliateUrl||x.itemUrl||''}
+async function testConnection(){const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:'1',elements:'rank,itemName,itemPrice,itemUrl,reviewCount,reviewAverage,availability,mediumImageUrls,itemCode'});const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();status('API接続テスト中…');try{const r=await callRakuten(url);const items=itemArray(r.data);status(`✅ API接続成功（${r.method}）\n${items.length}件取得できました。続けて「今日の10件を作る」を押してください。`)}catch(e){status('❌ API接続失敗\n'+e.message)}}
+function isExcludedProduct(x){
+  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
+  return /電子タバコ|タバコ|たばこ|煙草|vape|ベイプ|シーシャ|iqos|アイコス|glo|グロー|ploom|プルーム/.test(t);
+}
+
+
+function relevanceScore(x,query){
+  const tokens=String(query||'').trim().toLowerCase().split(/[\s　]+/).filter(Boolean);
+  if(!tokens.length)return 0;
+  const name=String(x.itemName||'').toLowerCase();
+  const catchcopy=String(x.catchcopy||'').toLowerCase();
+  const caption=String(x.itemCaption||'').toLowerCase();
+  let s=0, matched=0;
+  for(const t of tokens){
+    let hit=false;
+    if(name.includes(t)){s+=45;hit=true}
+    else if(catchcopy.includes(t)){s+=25;hit=true}
+    else if(caption.includes(t)){s+=12;hit=true}
+    if(hit)matched++;
+  }
+  if(matched===tokens.length)s+=35;
+  else if(matched>0)s+=matched*8;
+  return s;
+}
+async function themeSearch(app,key,affiliate,theme,pages,min,max,genre){
+  let all=[];
+  for(let p=1;p<=pages;p++){
+    const q=new URLSearchParams({
+      applicationId:app,
+      accessKey:key,
+      format:'json',
+      formatVersion:'1',
+      keyword:theme,
+      page:String(p),
+      hits:'30',
+      availability:'1',
+      imageFlag:'1',
+      sort:'standard'
+    });
+    if(affiliate)q.set('affiliateId',affiliate);
+    if(genre)q.set('genreId',genre);
+    if(min>0)q.set('minPrice',String(min));
+    if(max>0&&max<99999999)q.set('maxPrice',String(max));
+    const url='https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?'+q.toString();
+    const result=await callRakuten(url),data=result.data;
+    if(data?.error)throw new Error(data.error_description||data.error);
+    const got=itemArray(data);
+    all=all.concat(got);
+    status('テーマ検索中… '+p+' / '+pages+'ページ（'+result.method+' / '+got.length+'件）');
+    await new Promise(r=>setTimeout(r,1300));
+  }
+  return all;
+}
+
+function targetProfile(searchType,theme,keyword){
+  const q=((theme||'')+' '+(keyword||'')).trim();
+  if(/女性|レディース|ママ|主婦|女子|美容/.test(q)) return 'female';
+  if(/男性|メンズ|男子|紳士/.test(q)) return 'male';
+  return 'neutral';
+}
+function targetMismatch(x,target){
+  if(target==='neutral')return false;
+  const text=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
+
+  if(target==='female'){
+    // 女性向けでは「メンズ表記」が少しでもある商品を除外
+    if(/メンズ|男性用|男性向け|男性専用|紳士|ボーイズ|mens\b|men's\b/i.test(text)) return true;
+    return false;
+  }
+
+  if(target==='male'){
+    // 男性向けでは明確な女性専用品を除外
+    if(/レディース|女性用|女性向け|女性専用|婦人|ガールズ|womens\b|women's\b/i.test(text)) return true;
+    return false;
+  }
+  return false;
+}
+function imageCandidates(x){
+  const a=[...(x.mediumImageUrls||[]),...(x.smallImageUrls||[])];
+  const urls=[];
+  for(const v of a){
+    const u=typeof v==='string'?v:(v?.imageUrl||v?.url||'');
+    if(u && !urls.includes(u)) urls.push(u);
+    if(urls.length>=3)break;
+  }
+  return urls;
+}
+async function research(){
+  const app=document.getElementById('appId').value.trim(),key=document.getElementById('accessKey').value.trim();
+  if(!app||!key){status('Application IDとAccess Keyを入力してください。');return}
+  saveSettings();
+
+  const searchType=document.getElementById('searchType').value,
+    theme=document.getElementById('theme').value,
+    keyword=document.getElementById('keyword').value.trim(),
+    pages=Number(document.getElementById('pages').value||3),
+    genre=document.getElementById('genreId').value.trim(),
+    genreLabel=document.getElementById('genreId').selectedOptions?.[0]?.textContent?.trim()||'',
+    periodChoice=document.getElementById('period').value,
+    mode=document.getElementById('mode').value,
+    saleOnly=document.getElementById('saleOnly').value==='1',
+    affiliate=document.getElementById('affiliateId').value.trim(),
+    min=Number(document.getElementById('minPrice').value||0),
+    max=Number(document.getElementById('maxPrice').value||99999999),
+    target=targetProfile(searchType,theme,keyword);
+
+  status(searchType==='theme'?'テーマから商品を探しています…':searchType==='word'?'ワード検索しています…':'楽天ランキングを取得しています…');
+  document.getElementById('results').innerHTML='<div class="empty">取得中…</div>';
+
+  try{
+    let all=[];
+    let activeQuery='';
+
+    if(searchType==='theme' || searchType==='word'){
+      let query=searchType==='word'?keyword:theme;
+      if(searchType==='word' && !query && genre){
+        query=genreLabel.replace(/・/g,' ');
+      }
+      activeQuery=query;
+      if(!query)throw new Error(searchType==='word'?'検索ワードを入力するか、ジャンルを選んでください。':'おすすめテーマを選んでください。');
+      all=await themeSearch(app,key,affiliate,query,pages,min,max,genre);
+    }else{
+      const apiPeriod=periodChoice==='realtime'?'realtime':'';
+      for(let p=1;p<=pages;p++){
+        const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',page:String(p)});
+        if(genre)q.set('genreId',genre);
+        if(apiPeriod)q.set('period',apiPeriod);
+        if(affiliate)q.set('affiliateId',affiliate);
+        const url='https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601?'+q.toString();
+        const result=await callRakuten(url),data=result.data;
+        if(data?.error)throw new Error(data.error_description||data.error);
+        const got=itemArray(data);
+        all=all.concat(got);
+        status('ランキング取得中… '+p+' / '+pages+'ページ（'+result.method+' / '+got.length+'件）');
+        await new Promise(r=>setTimeout(r,1300));
+      }
+    }
+
+    const map=new Map();
+    all.forEach((x,idx)=>{
+      if(x && x.itemCode && !map.has(x.itemCode)){
+        if(!x.rank)x.rank=idx+1;
+        map.set(x.itemCode,x);
+      }
+    });
+
+    let arr=[...map.values()].filter(x=>{
+      const price=Number(x.itemPrice||0);
+      return price>=min&&price<=max&&directUrl(x)&&Number(x.availability??1)===1&&!isExcludedProduct(x)&&!targetMismatch(x,target)&&(!saleOnly||isOnSale(x));
+    });
+
+    const history=updateMonthlyHistory(arr);
+
+    if(searchType==='ranking' && periodChoice==='monthly'){
+      const monthlyItems=Object.values(history).map(v=>v.item).filter(Boolean);
+      const mm=new Map();
+      [...monthlyItems,...arr].forEach(x=>{if(x?.itemCode)mm.set(x.itemCode,x)});
+      arr=[...mm.values()].filter(x=>{
+        const price=Number(x.itemPrice||0);
+        return price>=min&&price<=max&&directUrl(x)&&!isExcludedProduct(x)&&!targetMismatch(x,target)&&(!saleOnly||isOnSale(x));
+      });
+    }
+
+    arr.forEach(x=>{
+      const base=finalScore(x,mode,history);
+      x._relevance=(searchType==='theme'||searchType==='word')?relevanceScore(x,activeQuery):0;
+      x._score=(searchType==='theme'||searchType==='word')?Math.round(base*.35+x._relevance*.65):base;
+    });
+    if(searchType==='theme'||searchType==='word'){
+      arr=arr.filter(x=>x._relevance>0);
+    }
+    arr.sort((a,b)=>b._score-a._score||b._relevance-a._relevance||Number(a.rank||999)-Number(b.rank||999));
+    candidates=arr.slice(0,10);
+
+    if(!candidates.length)throw new Error(saleOnly?'条件内にセール中の商品がありませんでした。価格・テーマ・ページ数を変えてください。':'条件に合う商品がありませんでした。テーマ・価格条件を見直してください。');
+
+    localStorage.setItem(DONE,'[]');
+    render();
+
+    const modeName={mix:'おまかせミックス',hidden:'穴場重視',click:'クリック期待',chappy:'チャッピーおすすめ'}[mode];
+    const sourceName=searchType==='theme'?'テーマ「'+theme+'」':searchType==='word'?'ワード「'+(keyword||genreLabel)+'」':'ランキング';
+    const targetName=target==='female'?'女性向け厳格フィルター':target==='male'?'男性向け厳格フィルター':'男女指定なし';
+    status('完了：'+sourceName+(genre?' × ジャンルID '+genre:' × 全ジャンル')+' × '+targetName+' × '+modeName+(saleOnly?' × セール中のみ':'')+' で10件作りました。');
+  }catch(e){
+    console.error(e);
+    status('取得できませんでした。\n\n'+e.message+'\n\n※Access Keyは表示時に伏せています。');
+    document.getElementById('results').innerHTML='<div class="empty">取得に失敗しました。</div>';
+  }
+}
+function render(){
+  const root=document.getElementById('results');
+  root.innerHTML='';
+  candidates.forEach((x,i)=>{
+    const rank=i+1,img=imageUrl(x),copy=makeCopy(x),url=directUrl(x),ideas=thumbnailIdeas(x),imgs=imageCandidates(x),style=pickPostStyle(x,infer(cleanName(x.itemName))),el=document.createElement('article');
+    el.className='card';
+    el.id='card-'+rank;
+    el.innerHTML=
+      '<div class="top">'+
+        '<div class="rank">'+rank+'位</div>'+
+        (img?'<img class="thumb" src="'+esc(img)+'" referrerpolicy="no-referrer">':'')+
+        '<div class="meta">'+
+          '<h3>'+esc(cleanName(x.itemName))+'</h3>'+
+          '<div class="chips">'+
+            '<span class="chip score">選定スコア '+x._score+'</span>'+
+            '<span class="chip">穴場 '+x._hidden+'</span>'+
+            '<span class="chip">クリック期待 '+x._click+'</span>'+
+            '<span class="chip">チャッピー '+x._chappy+'</span>'+
+            (x._relevance?'<span class="chip" style="background:#eef6ff;color:#174a9c;font-weight:900">ワード一致 '+x._relevance+'</span>':'')+
+            '<span class="chip">今月 '+x._monthly+'</span>'+
+            (isOnSale(x)?'<span class="chip" style="background:#fff0d9;color:#a14d00;font-weight:900">'+esc(saleEndLabel(x)||'SALE中')+'</span>':'')+
+            '<span class="chip">市場ランキング '+esc(x.rank||'-')+'位</span>'+
+            '<span class="chip">レビュー '+esc(x.reviewCount??0)+'件</span>'+
+            '<span class="chip">評価 '+esc(x.reviewAverage??'-')+'</span>'+
+            '<span class="chip">文章 '+({sale:'セール訴求',review:'レビュー注目',season:'季節訴求',problem:'悩み解決',comparison:'比較型',empathy:'共感型',discovery:'発見型'}[style]||'発見型')+'</span>'+
+            '<span class="chip">'+yen(x.itemPrice)+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="promoBox"><div class="promoTitle">サムネ・1行目候補</div><div class="thumbIdeas">'+ideas.map(t=>'<span class="thumbIdea">'+esc(t)+'</span>').join('')+'</div>'+
+      (imgs.length?'<div class="promoTitle" style="margin-top:10px">商品画像候補</div><div class="imageChoices">'+imgs.map((u,j)=>'<img class="imageChoice" src="'+esc(u)+'" title="画像候補 '+(j+1)+'" referrerpolicy="no-referrer">').join('')+'</div><div class="imageHint">ROOM投稿画面の「画像追加・編集」で、店舗画像の位置調整や自分で撮った写真への変更ができます。</div>':'')+
+      '</div>'+
+      '<div class="recommendBox">'+esc(recommendText(x)).replace(/\n/g,'<br>')+'</div>'+
+      '<textarea id="copy-'+rank+'" readonly>'+esc(copy)+'</textarea>'+
+      '<div class="cardstatus" style="margin-top:4px">文字数：'+copy.length+' / 500</div>'+
+      '<div class="actions">'+
+        '<button class="primary" id="prepare-'+rank+'">この内容で投稿準備</button>'+
+        '<button class="gray" id="copybtn-'+rank+'">文章コピー</button>'+
+        '<button class="blue" id="thumbbtn-'+rank+'">サムネ文コピー</button>'+
+        '<button class="green" id="donebtn-'+rank+'">投稿済みにする</button>'+
+        '<button id="nextbtn-'+rank+'">次へ ↓</button>'+
+      '</div>'+
+      '<div class="cardstatus" id="cardstatus-'+rank+'"></div>';
+    root.appendChild(el);
+
+    document.getElementById('prepare-'+rank).addEventListener('click',()=>prepare(rank,url));
+    document.getElementById('copybtn-'+rank).addEventListener('click',()=>copyOnly(rank));
+    document.getElementById('thumbbtn-'+rank).addEventListener('click',()=>copyThumb(rank,ideas[0]));
+    document.getElementById('donebtn-'+rank).addEventListener('click',()=>toggleDone(rank));
+    document.getElementById('nextbtn-'+rank).addEventListener('click',()=>goNext(rank));
+  });
+  document.getElementById('progress').style.display='block';
+  updateProgress();
+}
+async function copyThumb(rank,text){
+  let ok=false;
+  try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);ok=true}}catch(e){}
+  if(!ok){try{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();ok=document.execCommand('copy');ta.remove()}catch(e){}}
+  document.getElementById('cardstatus-'+rank).textContent=ok?'✅ サムネ文「'+text+'」をコピーしました。':'サムネ文をコピーできませんでした。';
+}
+async function copyText(rank){const source=document.getElementById('copy-'+rank);if(!source)return false;const value=source.value;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);return true}}catch(e){}const sx=window.scrollX,sy=window.scrollY;const active=document.activeElement;try{const temp=document.createElement('textarea');temp.value=value;temp.setAttribute('readonly','');temp.style.position='fixed';temp.style.left='-9999px';temp.style.top='0';temp.style.opacity='0';document.body.appendChild(temp);try{temp.focus({preventScroll:true})}catch(e){temp.focus()}temp.select();temp.setSelectionRange(0,temp.value.length);const ok=document.execCommand('copy');temp.remove();try{active?.focus?.({preventScroll:true})}catch(e){}window.scrollTo(sx,sy);return ok}catch(e){window.scrollTo(sx,sy);return false}}
+async function prepare(rank,url){const st=document.getElementById('cardstatus-'+rank);if(!url){if(st)st.textContent='商品URLが見つかりませんでした。';return}const tab=window.open('about:blank','_blank');if(!tab){if(st)st.textContent='⚠️ Edgeに新しいタブをブロックされました。アドレスバー右側のポップアップ許可をONにしてください。';return}try{tab.document.write('<!doctype html><meta charset="utf-8"><title>楽天商品ページを開いています</title><body style="font-family:sans-serif;padding:30px">楽天の商品ページを開いています…</body>')}catch(e){}const ok=await copyText(rank);if(st)st.textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。コピーできなかった場合は「文章コピー」を押してください。';try{tab.location.replace(url)}catch(e){tab.location.href=url}}
+async function copyOnly(rank){const sy=window.scrollY;const ok=await copyText(rank);window.scrollTo(0,sy);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ コピーしました。画面位置はそのままです。':'コピーできませんでした。文章欄を手動で選択してCtrl+Cしてください。'}
+function doneList(){try{return JSON.parse(localStorage.getItem(DONE)||'[]')}catch(e){return[]}}
+function toggleDone(rank){let d=doneList();d=d.includes(rank)?d.filter(x=>x!==rank):[...d,rank];localStorage.setItem(DONE,JSON.stringify(d));updateProgress()}
+function updateProgress(){const d=doneList();for(let i=1;i<=10;i++){const c=document.getElementById('card-'+i);if(c)c.classList.toggle('done',d.includes(i))}const n=d.length,p=Math.round(n/10*100);document.getElementById('progressText').textContent=`${n} / 10 投稿済み`;document.getElementById('progressPct').textContent=p+'%';document.getElementById('progressBar').style.width=p+'%'}
+function goNext(rank){const d=doneList();let n=null;for(let i=rank+1;i<=10;i++)if(!d.includes(i)){n=i;break}if(!n)for(let i=1;i<=10;i++)if(!d.includes(i)){n=i;break}if(n)document.getElementById('card-'+n)?.scrollIntoView({behavior:'smooth',block:'center'});else alert('10件すべて投稿済みです！')}
+loadSettings();
+</script>
+</body>
+</html>
