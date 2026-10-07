@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V40</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V41</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V40</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V41</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V40の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V41の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V40：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV40を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V41：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV41を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -137,7 +137,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button style="background:#f28c00;color:#fff" onclick="hotResearch()">🔥 今売れてる10件</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V40は入力値をこのブラウザ内にだけ保存できます。「🔥 今売れてる10件」はリアルタイム順位とデイリー順位を比較して勢いのある商品を選びます。商品名・キャッチコピー・商品説明から用途を判定し、商品ごとに使う場面やメリットを変えます。用途が判別できない販促ワード中心の商品は評価を下げ、曖昧な紹介文を作らないようにしています。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V41は入力値をこのブラウザ内にだけ保存できます。「🔥 今売れてる10件」はリアルタイム順位とデイリー順位を比較して勢いのある商品を選びます。商品名・キャッチコピー・商品説明から用途を判定し、商品ごとに使う場面やメリットを変えます。用途が判別できない販促ワード中心の商品は評価を下げ、曖昧な紹介文を作らないようにしています。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -739,10 +739,10 @@ function strongReviewText(x){
   const count=Number(x.reviewCount||0);
   const avg=Number(x.reviewAverage||0);
   if(count>=1000){
-    return 'レビュー'+count.toLocaleString()+'件。口コミ数がかなり多いので、購入前の比較材料にしやすいです◎';
+    return '口コミが'+count.toLocaleString()+'件あるので、気になる人はリアルな感想も見ておくとよさそう◎';
   }
   if(count>=100 && avg>=4.4){
-    return 'レビュー'+count.toLocaleString()+'件・評価'+avg.toFixed(2)+'。数字もしっかり出ているので気になる人は口コミも見ておきたいです◎';
+    return 'レビュー'+count.toLocaleString()+'件・評価'+avg.toFixed(2)+'。評判もなかなか良さそうです◎';
   }
   return '';
 }
@@ -791,45 +791,68 @@ ${name}
 
   if(isProtein){
     const flavor =
-      /チョコ/.test(allText)?'チョコ系の味':
-      /バナナ/.test(allText)?'バナナ系の味':
-      /抹茶/.test(allText)?'抹茶系の味':
-      /ミルクティー/.test(allText)?'ミルクティー系の味':
-      /ストロベリー|いちご/.test(allText)?'いちご系の味':
-      '続けやすそうな味';
+      /チョコ/.test(allText)?'チョコ系':
+      /バナナ/.test(allText)?'バナナ系':
+      /抹茶/.test(allText)?'抹茶系':
+      /ミルクティー/.test(allText)?'ミルクティー系':
+      /ストロベリー|いちご/.test(allText)?'いちご系':
+      '';
+    const isBeauty=/コラーゲン|美容|女性用|女性向け|コラテイン/.test(allText);
     const type =
-      /wpc|ホエイ/.test(allText)?'ホエイタイプ':
-      /ソイ/.test(allText)?'ソイタイプ':
+      /wpc|ホエイ/.test(allText)?'ホエイ':
+      /ソイ/.test(allText)?'ソイ':
       'プロテイン';
-    const intro=stablePick(x,[
-      flavor+'が好きな人なら、まず味のところから気になる商品。',
-      '毎日飲むものだから、成分だけじゃなく「ちゃんと続けられるか」も大事。',
-      'トレーニング後だけじゃなく、忙しい日のたんぱく質補給にも使いやすそう。',
-      'プロテインは結局、飲む回数が増えるほど“飽きにくさ”が大事になってきますよね。'
-    ]);
-    const extra=stablePick(x,[
-      type+'なので、筋トレ後のたんぱく質補給を意識している人にも候補にしやすいです。',
-      '味が合えば毎日の習慣にしやすいので、甘い系が好きな人はチェックしておきたいところ。',
-      'いつもの味に飽きてきた人や、初めてチョコ系を試したい人にも気になる選択肢です。',
-      '容量と価格のバランスも含めて、普段飲んでいるものと比べながら選ぶのが良さそうです。'
-    ]);
+
+    const intro=isBeauty
+      ? stablePick(x,[
+          'これ、ただのプロテインじゃなくて美容も意識したい人向けなのが気になる✨',
+          'たんぱく質も美容もどっちも気になる人、こういうの探してません？',
+          '毎日のプロテインに美容要素もプラスしたい人には、かなり気になるタイプです。'
+        ])
+      : flavor
+      ? stablePick(x,[
+          flavor+'が好きなら、これはちょっと気になる味かも👀',
+          '毎日飲むなら、やっぱり「おいしく続けられるか」って大事ですよね。',
+          flavor+'好きの人なら一度チェックしてみたくなるプロテインです。'
+        ])
+      : stablePick(x,[
+          '毎日飲むものだから、無理なく続けられるプロテインがいいですよね。',
+          '筋トレ後の1杯、せっかくなら続けやすいものを選びたいところ。',
+          'いつものプロテインをちょっと変えてみたい人に気になる一品です。'
+        ]);
+
+    const extra=isBeauty
+      ? stablePick(x,[
+          'コラーゲン系の成分も入っているので、トレーニングだけじゃなく美容も気にしたい人に合いそう。',
+          '「運動もしたいけど、美容も気になる」って人には取り入れやすそうです。',
+          '女性向けを探している人なら、味だけじゃなく美容成分のところも見ておきたいですね。'
+        ])
+      : stablePick(x,[
+          type+'タイプなので、普段のたんぱく質補給にも取り入れやすそうです。',
+          '毎日続けるなら、味・飲みやすさ・価格のバランスも大事。',
+          'いつものプロテインと比べながら、自分に合うか見てみるのがよさそうです。'
+        ]);
+
+    const featureLine = features.length
+      ? features.slice(0,2).map(v=>v.label).join('・')+'なのも気になるポイント。'
+      : '';
     const saleLine=sale?'\n🔥 '+sale:'';
     const reviewLine=reviewStrong?'\n'+reviewStrong:'';
+
     return `${hook}
 
 ${name}
 
 ${intro}
 ${extra}
-${benefit}
+${featureLine}
 
-「味で妥協したくない」「毎日無理なく続けたい」人には、かなり相性を見てみたくなるプロテインだと思います。${saleLine}${reviewLine}
+${isBeauty?'美容もたんぱく質もどっちも気になる人には、かなり見てほしいタイプ◎':'味や続けやすさで選びたい人には、候補に入れてみてもよさそう◎'}${saleLine}${reviewLine}
 
 💰 価格：${price}
 
-味・容量・栄養成分・1回あたりの量まで商品ページで比べてみてください◎`;
+気になったら、味・容量・栄養成分を商品ページで見てみてください＾＾`;
   }
-
   let middle='';
   if(style==='sale'){
     middle=(sale?'🔥 '+sale+'\n':'')+'気になっていた人は、条件が変わる前に一度見ておきたいところ。';
@@ -852,15 +875,15 @@ ${benefit}
 ${name}
 
 ${benefit}
-${info.pain}なら、かなり気になる候補だと思います。
+${info.pain}なら、ちょっと見てみたくなるアイテムです◎
 
 ${middle}${reviewLine}
 
-使う場面をイメージしながら見ると、自分に合うか判断しやすいです。
+自分ならどこで使うかな？って想像しながら見ると選びやすいです＾＾
 
 💰 価格：${price}
 
-気になったら、サイズ・仕様・在庫まで商品ページで見てみてください◎`;
+気になったら、サイズや仕様も商品ページで見てみてください＾＾`;
 }
 function makeCopy(x){
   const info=itemProfile(x);
