@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V31</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V32</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V31</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V32</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V31の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V32の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V31：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV31を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V32：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV32を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V31は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V32は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -243,7 +243,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV31Month-'+monthKey()}
+function monthStoreKey(){return 'roomV32Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -470,6 +470,44 @@ function fit500(body,tagString){
   if(out.length>500) out=out.slice(0,497)+'…';
   return out;
 }
+function featureList(x){
+  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
+  const out=[];
+  const add=(label,desc)=>{if(!out.some(v=>v.label===label))out.push({label,desc})};
+  const rules=[
+    [/シンサレート/, 'シンサレート', '軽さとあたたかさを両立しやすい素材'],
+    [/フランネル/, 'フランネル', 'なめらかであたたかみのある肌ざわり'],
+    [/ピーチスキン/, 'ピーチスキン', 'さらっとやわらかな質感'],
+    [/洗える|丸洗い/, '洗える', '自宅でお手入れしやすい'],
+    [/蓄熱/, '蓄熱', '寒い時期のあたたかさを意識した仕様'],
+    [/抗菌/, '抗菌', '清潔さを保ちやすい'],
+    [/防臭/, '防臭', 'ニオイ対策も意識できる'],
+    [/速乾/, '速乾', '洗った後も乾きやすい'],
+    [/軽量/, '軽量', '持ち運びや扱いやすさに配慮'],
+    [/撥水/, '撥水', '水や汚れが気になる場面でも使いやすい'],
+    [/防水/, '防水', '水濡れ対策を意識した仕様'],
+    [/折りたたみ/, '折りたたみ', '使わない時に省スペースで収納しやすい'],
+    [/省スペース/, '省スペース', '場所を取りにくく使いやすい'],
+    [/コードレス/, 'コードレス', '場所を選ばず使いやすい'],
+    [/マグネット/, 'マグネット', '設置や取り外しがしやすい'],
+    [/伸縮/, '伸縮', '使う場所に合わせて調整しやすい'],
+    [/大容量/, '大容量', 'まとめて使いたい人にも向きそう'],
+    [/コンパクト/, 'コンパクト', '置き場所を選びにくいサイズ感'],
+    [/静音/, '静音', '音が気になる場面でも使いやすそう'],
+    [/保温/, '保温', '温かさをキープしやすい'],
+    [/保冷/, '保冷', '冷たさを保ちやすい'],
+    [/無添加/, '無添加', '成分を気にする人にも選びやすい'],
+    [/国産/, '国産', '産地を重視したい人にも候補'],
+    [/オーガニック/, 'オーガニック', '素材にこだわりたい人にも'],
+    [/ホエイ/, 'ホエイ', 'トレーニング後のたんぱく質補給に選ばれやすい'],
+    [/ソイ/, 'ソイ', '植物性たんぱく質を取りたい人にも'],
+    [/高たんぱく|高タンパク/, '高たんぱく', 'たんぱく質量を重視したい人向け'],
+    [/北欧/, '北欧テイスト', '部屋になじみやすい落ち着いたデザイン'],
+    [/木目/, '木目調', 'ナチュラルな雰囲気に合わせやすい']
+  ];
+  rules.forEach(([re,label,desc])=>{if(re.test(t))add(label,desc)});
+  return out.slice(0,4);
+}
 function pickPostStyle(x,info){
   const name=String(x.itemName||'');
   const reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0);
@@ -483,45 +521,70 @@ function pickPostStyle(x,info){
   const sum=[...code].reduce((a,c)=>a+c.charCodeAt(0),0);
   return ['empathy','comparison','discovery'][sum%3];
 }
+function featureText(features){
+  if(!features.length)return '';
+  if(features.length===1)return features[0].label+'なのもポイント。'+features[0].desc+'のが良さそうです。';
+  const names=features.map(v=>'「'+v.label+'」').join('、');
+  const descs=features.slice(0,3).map(v=>v.desc).join('。');
+  return names+'など、気になる特徴がいくつかあります。'+descs+'。';
+}
 function buildPostBody(x,info,style){
   const name=cleanName(x.itemName);
   const rv=reviewLine(x);
   const price=yen(x.itemPrice);
   const sale=saleEndLabel(x);
+  const features=featureList(x);
+  const ft=featureText(features);
+  const reviewCount=Number(x.reviewCount||0);
+  const avg=Number(x.reviewAverage||0);
+  const reviewExtra=reviewCount>=1000
+    ? 'レビュー件数が多いので、実際の使い心地やサイズ感まで確認しやすいのも選びやすいポイント。'
+    : reviewCount>0
+    ? '口コミも見ながら、自分の使い方に合うかチェックしておきたいです。'
+    : '';
 
   if(style==='sale'){
-    return `【今チェックしておきたい👀】
+    return `【今チェックしておきたいお買い得アイテム👀】
 ${name}
 
-${sale?'🔥 '+sale+'\n':''}${info.benefit}◎
-気になっていた人は、条件が変わる前に一度見ておきたいアイテム。
+${sale?'🔥 '+sale+'\n':''}${info.pain}。
+${ft||info.benefit+'のが気になるポイントです。'}
+
+${info.benefit}ので、気になっていた人は価格や条件が変わる前に見ておきたいところ◎
+${reviewExtra}
 
 ⭐ ${rv}
 💰 表示価格：${price}
 
-※価格・在庫・送料・仕様は商品ページで確認してください。`;
+※価格・在庫・送料・仕様・セール条件は商品ページで確認してください。`;
   }
 
   if(style==='review'){
-    return `【レビュー多めで気になったアイテム👀】
+    return `【口コミを見ながら選びたい人に👀】
 ${name}
 
-${rv}
-口コミ数が多い商品は、良い点だけじゃなく気になる点も見つけやすいのが助かる◎
-${info.pain}チェックしておきたいです。
+${info.pain}。
+${ft||info.benefit+'のが魅力に感じます。'}
+
+⭐ ${rv}
+${reviewExtra}
+レビューが多い商品は、良かった点だけでなく「思っていたのと違った」という声も見つけやすいので、購入前の比較材料にしやすいです。
 
 💰 表示価格：${price}
 
-※仕様・在庫・送料は商品ページで確認してください。`;
+※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
   }
 
   if(style==='season'){
-    return `【季節が来る前にチェックしておきたい🍂】
+    return `【寒くなる前に候補に入れておきたい🍂】
 ${name}
 
-${info.pain}✨
-${info.benefit}。
-季節ものは必要になってから探すと選択肢が減ることもあるので、今のうちに候補入り◎
+${info.pain}。
+${ft||info.benefit+'のが気になるポイントです。'}
+
+冬物は必要になってから探すと、欲しいサイズやカラーが選びにくくなることも。
+今のうちに比較して、自分に合うものを決めておくと安心です◎
+${reviewExtra}
 
 ⭐ ${rv}
 💰 表示価格：${price}
@@ -530,12 +593,15 @@ ${info.benefit}。
   }
 
   if(style==='problem'){
-    return `【こういう地味なストレス、減らしたい…！】
+    return `【毎日の“ちょっと面倒”を減らしたい人に】
 ${name}
 
 ${info.pain}。
-${info.benefit}のが良さそう◎
-「毎回ちょっと面倒」を減らせるものって、結局出番が多い気がします。
+${ft||info.benefit+'のが使いやすそうです。'}
+
+こういうアイテムは派手さより、使うたびにラクだと感じられるかが大事。
+置き場所や使い方までイメージして、自分の生活に合いそうなら候補に入れたいです◎
+${reviewExtra}
 
 ⭐ ${rv}
 💰 表示価格：${price}
@@ -544,12 +610,14 @@ ${info.benefit}のが良さそう◎
   }
 
   if(style==='comparison'){
-    return `【これ、比較候補に入れておきたい👀】
+    return `【似た商品と比べながら選びたい👀】
 ${name}
 
-${info.benefit}◎
-似た商品が多いジャンルだから、価格だけじゃなくレビューや使い方も見比べたいところ。
-${info.pain}候補のひとつとしてチェックしたいです。
+${info.pain}。
+${ft||info.benefit+'のが注目ポイントです。'}
+
+同じジャンルでも、サイズ・素材・使いやすさで満足度が変わりやすいので、価格だけで決めずに比較したいところ。
+レビューや仕様を見ながら、自分に必要な機能が揃っているか確認しておきたいです◎
 
 ⭐ ${rv}
 💰 表示価格：${price}
@@ -561,9 +629,12 @@ ${info.pain}候補のひとつとしてチェックしたいです。
     return `【こういうの探してた人、多そう👀】
 ${name}
 
-${info.pain}✨
-${info.benefit}のが気になるポイント。
-派手じゃないけど、毎日の使いやすさってこういうところで差が出そう◎
+${info.pain}。
+${ft||info.benefit+'のが良さそうです。'}
+
+「毎日使うものだから、ちょっとした使いやすさは妥協したくない」という人に合いそう。
+見た目だけじゃなく、手入れのしやすさや使う場面まで考えて選びたいアイテムです◎
+${reviewExtra}
 
 ⭐ ${rv}
 💰 表示価格：${price}
@@ -571,12 +642,15 @@ ${info.benefit}のが気になるポイント。
 ※サイズ・在庫・送料・仕様は商品ページで確認してください。`;
   }
 
-  return `【ランキングで見つけて気になった👀✨】
+  return `【ランキングで見つけて気になったアイテム👀✨】
 ${name}
 
 ${info.pain}。
-${info.benefit}◎
-「こんなのあったんだ」と思える商品は、つい詳しく見たくなります。
+${ft||info.benefit+'のが気になるポイントです。'}
+
+ランキング上位の商品は目に入りやすいけど、実際に大事なのは自分の使い方に合うかどうか。
+特徴・レビュー・価格を見比べながら、候補のひとつとしてチェックしておきたいです◎
+${reviewExtra}
 
 ⭐ ${rv}
 💰 表示価格：${price}
