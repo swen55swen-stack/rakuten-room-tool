@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V37</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V38</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V37</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V38</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V37の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V38の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V37：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV37を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V38：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV38を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -137,7 +137,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button style="background:#f28c00;color:#fff" onclick="hotResearch()">🔥 今売れてる10件</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V37は入力値をこのブラウザ内にだけ保存できます。「🔥 今売れてる10件」はリアルタイム順位とデイリー順位を比較して勢いのある商品を選びます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V38は入力値をこのブラウザ内にだけ保存できます。「🔥 今売れてる10件」はリアルタイム順位とデイリー順位を比較して勢いのある商品を選びます。用途が判別できない販促ワード中心の商品は評価を下げ、曖昧な紹介文を作らないようにしています。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -177,7 +177,14 @@ async function fetchApi(url){const res=await fetch(url,{method:'GET',mode:'cors'
 function jsonp(url){return new Promise((resolve,reject)=>{const cb='rrcb_'+Date.now()+'_'+Math.floor(Math.random()*99999);const script=document.createElement('script');let called=false;const timer=setTimeout(()=>{cleanup();reject(new Error('JSONPが15秒以内に応答しませんでした'))},15000);function cleanup(){clearTimeout(timer);try{delete window[cb]}catch(e){};script.remove()}window[cb]=(data)=>{called=true;cleanup();resolve(data)};script.onload=()=>{if(!called){setTimeout(()=>{if(!called){cleanup();reject(new Error('JSONPスクリプトは読み込めましたが、callbackが実行されませんでした'))}},100)}};script.onerror=()=>{cleanup();reject(new Error('JSONPスクリプトの読み込みに失敗しました（403/許可サイト/CSP等の可能性）'))};script.src=url+(url.includes('?')?'&':'?')+'callback='+encodeURIComponent(cb);document.head.appendChild(script)})}
 async function callRakuten(url){let fetchErr='';try{const data=await fetchApi(url);return {data,method:'fetch'}}catch(e){fetchErr=e.message||String(e)}try{const data=await jsonp(url);return {data,method:'jsonp',fetchErr}}catch(e){throw new Error('fetch: '+fetchErr+' / JSONP: '+(e.message||e)+' / URL: '+redactUrl(url))}}
 function itemArray(data){let arr=data?.items||data?.Items||[];return arr.map(x=>x?.item||x?.Item||x).filter(Boolean)}
-function opportunityScore(x){const rank=Number(x.rank||999),reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0),aff=Number(x.affiliateRate||0);let s=0;s+=Math.max(0,55-(rank*.55));if(reviews<=5)s+=38;else if(reviews<=20)s+=34;else if(reviews<=50)s+=30;else if(reviews<=100)s+=26;else if(reviews<=300)s+=20;else if(reviews<=800)s+=12;else if(reviews<=2000)s+=6;if(price>=1000&&price<=5000)s+=15;else if(price>5000&&price<=10000)s+=11;else if(price>10000&&price<=20000)s+=7;else if(price<1000)s+=6;if(avg>=4.3)s+=6;else if(avg>=4)s+=4;if(Number(x.availability??1)===1)s+=4;if((x.mediumImageUrls||[]).length)s+=3;s+=Math.min(8,aff*1.5);return Math.round(s)}
+function hasConcreteProductInfo(x){
+  const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
+  const promoOnly=/^(?:(?:1000円|1,000円|送料無料|ポイント\d+倍|\d+倍|セール|sale|クーポン|お買い得|ぽっきり|ポッキリ|ギフト|プレゼント|雑貨|便利グッズ|期間限定|ランキング|楽天|買い回り|マラソン|福袋|セット|おすすめ)[\s　・,/／_-]*)+$/i;
+  if(promoOnly.test(t.trim())) return false;
+  const concrete=/プロテイン|ホエイ|ソイ|布団|毛布|枕|寝具|収納|ラック|ケース|ボックス|掃除|クリーナ|モップ|ブラシ|キッチン|フライパン|鍋|包丁|水切|美容|コスメ|シャンプ|ドライヤ|バッグ|財布|靴|スニーカー|スマホ|イヤホン|充電|ケーブル|旅行|ホテル|旅館|温泉|ベビー|キッズ|おむつ|タオル|ハンガー|ボトル|タンブラー|食器|食品|肉|魚|米|スイーツ|ケーキ|コーヒー|お茶|洗剤|ティッシュ|マスク|家具|照明|ラグ|カーテン|ソファ|テーブル|チェア|ベッド|時計|文具|ペン|ノート|傘|靴下|シャツ|パンツ|ワンピ|ジャケット/i;
+  return concrete.test(t);
+}
+function opportunityScore(x){const rank=Number(x.rank||999),reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0),aff=Number(x.affiliateRate||0);let s=0;if(!hasConcreteProductInfo(x))s-=45;s+=Math.max(0,55-(rank*.55));if(reviews<=5)s+=38;else if(reviews<=20)s+=34;else if(reviews<=50)s+=30;else if(reviews<=100)s+=26;else if(reviews<=300)s+=20;else if(reviews<=800)s+=12;else if(reviews<=2000)s+=6;if(price>=1000&&price<=5000)s+=15;else if(price>5000&&price<=10000)s+=11;else if(price>10000&&price<=20000)s+=7;else if(price<1000)s+=6;if(avg>=4.3)s+=6;else if(avg>=4)s+=4;if(Number(x.availability??1)===1)s+=4;if((x.mediumImageUrls||[]).length)s+=3;s+=Math.min(8,aff*1.5);return Math.round(s)}
 
 function isApiSaleActive(x){
   if(!x.startTime || !x.endTime) return false;
@@ -222,7 +229,7 @@ function saleEndLabel(x){
 }
 function clickScore(x){
   const rank=Number(x.rank||999), reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0), price=Number(x.itemPrice||0);
-  let s=0;
+  let s=0;if(!hasConcreteProductInfo(x))s-=35;
   s+=Math.max(0,70-rank*0.75);
   if(reviews>=5000)s+=18; else if(reviews>=1000)s+=15; else if(reviews>=300)s+=11; else if(reviews>=50)s+=7;
   if(avg>=4.6)s+=12; else if(avg>=4.4)s+=9; else if(avg>=4.2)s+=6;
@@ -247,7 +254,7 @@ function hotScore(x){
 function chappyScore(x){
   const name=String(x.itemName||''), cap=String(x.catchcopy||'')+' '+String(x.itemCaption||'');
   const reviews=Number(x.reviewCount||0), avg=Number(x.reviewAverage||0), rank=Number(x.rank||999);
-  let s=0;
+  let s=0;if(!hasConcreteProductInfo(x))s-=50;
   const handy=/隙間|収納|折りたた|時短|水切|スタンド|ホルダー|ラック|掃除|ブラシ|クリーナ|ケース|カバー|保存|充電|乾燥|省スペース|滑り止め|防水|マグネット|伸縮|2WAY|3WAY|コンパクト|コードレス|自動|ワンタッチ/i;
   const pain=/面倒|ラク|簡単|便利|すっきり|省スペース|時短|手軽|ストレス|片付|衛生|持ち運び/i;
   if(handy.test(name))s+=35;
@@ -383,10 +390,11 @@ function infer(name){
     thumbs:['次の旅候補に','週末旅に','旅行好き必見']
   };
   return {
-    cat:'暮らし', pain:'「これ便利そう」が好きな人に',
-    benefit:'毎日の暮らしに取り入れやすそうなアイテム',
-    tags:'#便利グッズ #暮らしを整える #生活雑貨 #家事ラク #暮らしのアイデア #主婦の味方 #おすすめ商品 #おうち時間',
-    thumbs:['これ気になる','暮らしがラクに','見つけた便利品']
+    cat:'不明',
+    pain:'商品名だけでは用途が分かりにくいアイテム',
+    benefit:'用途や特徴を確認してから紹介したい商品',
+    tags:'#楽天ROOM #楽天市場',
+    thumbs:['詳細をチェック','中身を確認','用途を見てみる']
   };
 }
 function reviewLine(x){
@@ -664,6 +672,19 @@ function buildPostBody(x,info,style){
   const benefit=benefitTalk(features,info);
   const reviewStrong=strongReviewText(x);
   const allText=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
+  if(info.cat==='不明'){
+    const saleLine=sale?'\n🔥 '+sale:'';
+    return `これ、タイトルだけだと何の商品かちょっと分かりにくいですね👀
+
+${name}
+
+「送料無料」「ポイントアップ」など条件は気になりますが、用途や特徴がタイトルから判断しにくい商品です。
+こういう商品は、無理に“便利そう”と決めつけず、商品ページで中身を確認してから紹介したいところ。${saleLine}
+
+💰 価格：${price}
+
+気になる場合は、商品内容・仕様・ショップ説明を確認してみてください◎`;
+  }
   const isProtein=/プロテイン|ホエイ|ソイ/.test(allText);
 
   if(isProtein){
