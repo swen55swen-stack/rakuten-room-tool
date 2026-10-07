@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V35</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V36</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V35</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V36</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V35の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V36の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V35：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV35を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V36：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV36を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V35は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V36は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -163,7 +163,7 @@ let candidates=[];
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function yen(n){return Number(n||0).toLocaleString('ja-JP')+'円'}
 function loadSettings(){try{const s=JSON.parse(localStorage.getItem(SETTINGS)||'{}');['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>{if(s[k]!==undefined)document.getElementById(k).value=s[k]})}catch(e){}}
-function saveSettings(){const s={};['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);localStorage.setItem(SETTINGS,JSON.stringify(s));status('設定をこのPCのブラウザに保存しました。')}
+function saveSettings(){const s={};['appId','accessKey','affiliateId','searchType','theme','keyword','genreId','period','mode','saleOnly','pages','minPrice','maxPrice'].forEach(k=>s[k]=document.getElementById(k).value);try{localStorage.setItem(SETTINGS,JSON.stringify(s));status('設定をこのPCのブラウザに保存しました。')}catch(e){cleanupMonthlyStorage();try{localStorage.setItem(SETTINGS,JSON.stringify(s));status('古い月間履歴を整理して、設定を保存しました。')}catch(e2){status('設定の保存容量が不足していますが、検索はそのまま使えます。')}}}
 function status(t){document.getElementById('mainStatus').textContent=t}
 function redactUrl(url){try{const u=new URL(url);if(u.searchParams.has('accessKey'))u.searchParams.set('accessKey','***');if(u.searchParams.has('applicationId'))u.searchParams.set('applicationId',u.searchParams.get('applicationId').slice(0,8)+'…');return u.toString()}catch(e){return '(URL解析不可)'}}
 async function fetchApi(url){const res=await fetch(url,{method:'GET',mode:'cors',credentials:'omit',cache:'no-store'});const raw=await res.text();let data=null;try{data=JSON.parse(raw)}catch(e){}if(!res.ok){const msg=data?.error_description||data?.error||raw.slice(0,300)||('HTTP '+res.status);throw new Error('HTTP '+res.status+'：'+msg)}if(!data)throw new Error('楽天APIの応答をJSONとして解析できませんでした。');return data}
@@ -243,20 +243,46 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV35Month-'+monthKey()}
+function monthStoreKey(){return 'roomMonth-'+monthKey()}
+function cleanupMonthlyStorage(){
+  const keep=monthStoreKey();
+  const remove=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i)||'';
+    if(/^roomV\d+Month-/.test(k)) remove.push(k);
+    if(/^roomMonth-/.test(k) && k!==keep) remove.push(k);
+  }
+  remove.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+}
+function compactMonthlyHistory(h,maxItems=250){
+  const rows=Object.entries(h||{}).sort((a,b)=>{
+    const ad=Date.parse(a[1]?.last||0)||0, bd=Date.parse(b[1]?.last||0)||0;
+    if(bd!==ad)return bd-ad;
+    return Number(b[1]?.count||0)-Number(a[1]?.count||0);
+  }).slice(0,maxItems);
+  return Object.fromEntries(rows);
+}
 function updateMonthlyHistory(items){
+  cleanupMonthlyStorage();
   let h={};
-  try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
+  try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){h={}}
   items.forEach(x=>{
     if(!x.itemCode)return;
-    const old=h[x.itemCode]||{count:0,bestRank:999,last:null,item:null};
-    old.count++;
-    old.bestRank=Math.min(old.bestRank,Number(x.rank||999));
+    const old=h[x.itemCode]||{count:0,bestRank:999,last:null};
+    old.count=Math.min(999,Number(old.count||0)+1);
+    old.bestRank=Math.min(Number(old.bestRank||999),Number(x.rank||999));
     old.last=new Date().toISOString();
-    old.item=x;
+    // 商品データ本体は保存しない。月間スコアに必要な最小情報だけ残す。
     h[x.itemCode]=old;
   });
-  localStorage.setItem(monthStoreKey(),JSON.stringify(h));
+  h=compactMonthlyHistory(h,250);
+  try{
+    localStorage.setItem(monthStoreKey(),JSON.stringify(h));
+  }catch(e){
+    // 容量不足ならさらに縮小。それでも保存できなくても商品取得は続ける。
+    h=compactMonthlyHistory(h,80);
+    try{localStorage.setItem(monthStoreKey(),JSON.stringify(h))}catch(e2){}
+  }
   return h;
 }
 function monthlyScore(x,h){
