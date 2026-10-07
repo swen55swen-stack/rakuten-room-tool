@@ -533,10 +533,17 @@ function hashtagProfile(x){
   ];
   keywordRules.forEach(([re,vals])=>{if(re.test(text))vals.forEach(addTag)});
 
-  // カテゴリタグ
-  if(/珪藻土.*コースター|コースター.*珪藻土/.test(text)){
+  // カテゴリタグ：商品専用判定を優先
+  const exactInfo=itemProfile(x);
+  if(exactInfo?.cat==='枕'){
+    add('#枕','#まくら','#快眠','#睡眠環境','#寝具','#寝室','#枕選び');
+    if(/洗える|丸洗い|洗濯/.test(text))add('#洗える枕');
+    if(/通気性|通気/.test(text))add('#通気性');
+    if(/肩こり|肩コリ/.test(text))add('#肩こり対策');
+    if(/いびき/.test(text))add('#いびき対策');
+  }else if(/珪藻土.*コースター|コースター.*珪藻土/.test(text)){
     add('#珪藻土コースター','#コースター','#水滴対策','#結露対策','#テーブル雑貨','#デスク用品');
-  }else if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(text)){
+  }else if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|寝具/.test(text)){
     add('#寝具','#掛け布団','#あったか寝具','#快眠','#冬支度','#寝室');
   }else if(/掃除|クリーナ|ブラシ|モップ|ワイパ|洗剤/.test(text)){
     add('#掃除グッズ','#家事ラク','#時短家事','#掃除用品','#暮らしを整える');
@@ -666,6 +673,14 @@ function stablePick(x,arr){
 function talkHook(x,info){
   const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')).toLowerCase();
 
+  if(info?.cat==='枕'){
+    return stablePick(x,[
+      '朝起きた時、首や肩まわりがなんとなく気になることありません？😴',
+      '毎晩使う枕、ちゃんと自分に合ってるか気になりません？',
+      '寝てもスッキリしない時、枕を見直したくなることありません？'
+    ]);
+  }
+
   if(/珪藻土.*コースター|コースター.*珪藻土/.test(t)){
     return stablePick(x,[
       '冷たい飲み物を置いた時、グラスの水滴でテーブルが濡れるの気になりません？🥤',
@@ -768,6 +783,32 @@ ${name}
 
 気になる場合は、商品内容・仕様・ショップ説明を確認してみてください◎`;
   }
+
+  if(info.cat==='枕'){
+    const saleLine=sale?'\n🔥 '+sale:'';
+    const reviewLine=reviewStrong?'\n'+reviewStrong:'';
+    const washable=/洗える|丸洗い|洗濯/.test(allText);
+    const breathable=/通気性|通気/.test(allText);
+    const gel=/ゲル|ジェル/.test(allText);
+    const points=[];
+    if(washable)points.push('洗えるタイプだから、毎日使うものを清潔に保ちやすいのがうれしいところ。');
+    if(breathable)points.push('通気性も気になる人なら、ムレにくさの部分もチェックしておきたいですね。');
+    if(gel)points.push('ゲル素材の寝心地やフィット感がどんな感じかも気になるポイント。');
+    if(!points.length)points.push('毎晩使うものだから、首や頭のフィット感はしっかり見ておきたいですね。');
+
+    return `${hook}
+
+${name}
+
+${points.slice(0,2).join('\n')}
+枕って毎日使うものだから、合う・合わないで朝の感覚も変わりますよね。
+首や肩まわりが気になる人や、今の枕がしっくりこない人は候補に入れてみてもよさそう◎${saleLine}${reviewLine}
+
+💰 価格：${price}
+
+高さ・硬さ・素材・サイズ・お手入れ方法を商品ページで見てみてください＾＾`;
+  }
+
   const isCoaster=/珪藻土.*コースター|コースター.*珪藻土/.test(allText);
   if(isCoaster){
     const saleLine=sale?'\n🔥 '+sale:'';
