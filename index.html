@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>楽天ROOM 自動リサーチ＋連続投稿 V27</title>
+<title>楽天ROOM 自動リサーチ＋連続投稿 V28</title>
 <style>
 :root{--red:#bf0000;--pink:#e6003d;--bg:#f5f6f8;--card:#fff;--muted:#666;--green:#168a45;--blue:#175bd7}
 *{box-sizing:border-box}
@@ -56,17 +56,17 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <body>
 <header>
 <div class="wrap">
-<h1>楽天ROOM 自動リサーチ＋連続投稿 V27</h1>
+<h1>楽天ROOM 自動リサーチ＋連続投稿 V28</h1>
 <div class="sub">ランキング・テーマ・自由ワードから、クリックされやすい候補を選定</div>
 </div>
 </header>
 
 <main>
 <div class="warning">
-<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V27の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
+<b>大事：</b>楽天ROOMの正確な「投稿者数」は公開APIでは取得できません。V28の「穴場スコア」は、楽天市場ランキング順位・レビュー数・価格帯・レビュー評価などを使った候補スコアです。「投稿者が少ない確定」ではなく「穴場候補」として使ってください。
 </div>
 <div class="warning" style="background:#eef6ff;border-color:#b9d7ff">
-<b>V27：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV27を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
+<b>V28：</b>「クリック期待」は実際のROOMクリック数ではなく、ランキング・レビュー・評価・価格・セール情報から作る予測スコアです。「今月の注目」は、このPCでV28を使うたびに商品データを蓄積して月内の登場回数と順位を加味します。
 </div>
 
 <section class="panel">
@@ -135,7 +135,7 @@ textarea{width:100%;min-height:150px;margin-top:12px;border:1px solid #ddd;borde
 <button class="primary" onclick="research()">今日の10件を作る</button>
 <a class="btnlink blue" href="https://webservice.rakuten.co.jp/" target="_blank">楽天Web Serviceを開く</a>
 </div>
-<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V27は入力値をこのブラウザ内にだけ保存できます。</div>
+<div class="help">Application IDとAccess Keyは楽天Web Serviceで自分のものを取得してください。ワード検索で空欄の場合は、選択したジャンル名を自動で検索ワードに使います。V28は入力値をこのブラウザ内にだけ保存できます。</div>
 <div id="mainStatus" class="statusbox">まだ取得していません。</div>
 </section>
 
@@ -217,7 +217,7 @@ function chappyScore(x){
 function monthKey(){
   const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 }
-function monthStoreKey(){return 'roomV27Month-'+monthKey()}
+function monthStoreKey(){return 'roomV28Month-'+monthKey()}
 function updateMonthlyHistory(items){
   let h={};
   try{h=JSON.parse(localStorage.getItem(monthStoreKey())||'{}')}catch(e){}
@@ -260,7 +260,14 @@ function infer(name){
     tags:'#収納 #整理収納 #収納アイデア #片付け #暮らしを整える #生活感を隠す #家事ラク #主婦の味方',
     thumbs:['ごちゃつき解消','これでスッキリ','収納の正解かも']
   };
-  if(/加湿|暖房|毛布|布団|ヒータ|こたつ|湯たんぽ/.test(n))return {
+  if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(n))return {
+    cat:'寝具',
+    pain:'寒い夜をあたたかく、気持ちよく眠りたい人に',
+    benefit:'冬の寝室づくりや冷え対策に取り入れやすそう',
+    tags:'#掛け布団 #寝具 #あったか寝具 #冬支度 #冷え対策 #快眠 #寝室 #おうち時間',
+    thumbs:['冬の寝具これ','あったか快眠','寒い夜に']
+  };
+  if(/加湿|暖房|ヒータ|こたつ|湯たんぽ/.test(n))return {
     cat:'秋冬', pain:'寒い季節のおうち時間を快適にしたい人に',
     benefit:'秋冬の冷え対策やおうち時間に取り入れやすそう',
     tags:'#秋冬支度 #冬支度 #あったかグッズ #冷え対策 #おうち時間 #防寒対策 #暮らしを整える #季節のおすすめ',
@@ -318,37 +325,48 @@ function reviewLine(x){
 }
 
 function hashtagProfile(x){
-  const text=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
+  const name=String(x.itemName||'').toLowerCase();
+  const catchcopy=String(x.catchcopy||'').toLowerCase();
+  const text=name+' '+catchcopy;
   const tags=[];
   const add=(...xs)=>xs.forEach(t=>{if(t&&!tags.includes(t))tags.push(t)});
 
-  // Core ROOM tags
   add('#楽天ROOM','#楽天市場','#楽天購入品','#おすすめ商品');
 
-  // Category / use-case tags based on actual product text
-  if(/掃除|クリーナ|ブラシ|モップ|ワイパ|洗剤/.test(text)) add('#掃除グッズ','#家事ラク','#時短家事','#掃除用品','#暮らしを整える');
-  if(/収納|ラック|ケース|チェスト|ハンガ|ワゴン|ボックス/.test(text)) add('#収納','#整理収納','#収納アイデア','#片付け','#生活雑貨');
-  if(/キッチン|フライパン|鍋|包丁|まな板|調理|水切|保存容器|タンブラー|食器/.test(text)) add('#キッチングッズ','#時短家事','#料理好き','#自炊生活','#家事ラク');
-  if(/美容|コスメ|化粧|美容液|クリーム|クレンジング|シャンプ|トリートメント|ヘア/.test(text)) add('#美容','#美容グッズ','#スキンケア','#ヘアケア','#おうち美容');
-  if(/ワンピ|シャツ|トップス|パンツ|スカート|バッグ|財布|スニーカー|靴|ブラジャー|ファッション/.test(text)) add('#ファッション','#大人カジュアル','#普段使い','#お出かけ','#楽天ファッション');
-  if(/ベビー|キッズ|子供|こども|おむつ|抱っこ|入園|通園|育児/.test(text)) add('#子育て','#育児グッズ','#子育て便利グッズ','#時短育児','#ママにおすすめ');
-  if(/プロテイン|ホエイ|ソイプロテイン|bcaa|eaa/.test(text)) add('#プロテイン','#筋トレ','#トレーニング','#ボディメイク','#たんぱく質');
-  if(/ダンベル|筋トレ|トレーニング|腹筋|懸垂|ヨガ|フィットネス|ストレッチ/.test(text)) add('#筋トレグッズ','#トレーニング','#フィットネス','#宅トレ','#運動習慣');
-  if(/インテリア|照明|ラグ|カーテン|ソファ|テーブル|チェア|ベッド|北欧/.test(text)) add('#インテリア','#おしゃれインテリア','#部屋づくり','#一人暮らし','#暮らしを整える');
-  if(/一人暮らし|ひとり暮らし/.test(text)) add('#一人暮らし','#ひとり暮らし','#新生活','#暮らしのアイデア');
-  if(/スマホ|iphone|android|イヤホン|充電|モバイル|ケーブル|タブレット/.test(text)) add('#スマホグッズ','#ガジェット','#便利アイテム','#家電');
-  if(/加湿|毛布|ヒータ|暖房|こたつ|湯たんぽ/.test(text)) add('#秋冬支度','#冬支度','#あったかグッズ','#冷え対策','#おうち時間');
-  if(/旅行|宿泊|ホテル|旅館|トラベル|宿泊券|旅行券|温泉|観光|ふるさと納税/.test(text)) add('#旅行','#国内旅行','#ホテル','#旅館','#温泉旅行','#おでかけ','#楽天トラベル','#ふるさと納税');
-  if(/食品|米|コーヒー|お菓子|スイーツ|パン|水|飲料/.test(text)) add('#食品','#お取り寄せ','#おうち時間','#楽天グルメ');
+  if(/掛け布団|掛布団|敷布団|布団|毛布|敷きパッド|ベッドパッド|枕|まくら|寝具/.test(text)){
+    add('#掛け布団','#寝具','#あったか寝具','#冬支度','#冷え対策','#快眠','#寝室','#おうち時間');
+  }else if(/掃除|クリーナ|ブラシ|モップ|ワイパ|洗剤/.test(text)){
+    add('#掃除グッズ','#家事ラク','#時短家事','#掃除用品','#暮らしを整える');
+  }else if(/収納|ラック|ケース|チェスト|ハンガ|ワゴン|ボックス/.test(text)){
+    add('#収納','#整理収納','#収納アイデア','#片付け','#生活雑貨');
+  }else if(/キッチン|フライパン|鍋|包丁|まな板|調理|水切|保存容器|タンブラー|食器/.test(text)){
+    add('#キッチングッズ','#時短家事','#料理好き','#自炊生活','#家事ラク');
+  }else if(/美容|コスメ|化粧|美容液|クリーム|クレンジング|シャンプ|トリートメント|ヘア/.test(text)){
+    add('#美容','#美容グッズ','#スキンケア','#ヘアケア','#おうち美容');
+  }else if(/プロテイン|ホエイ|ソイプロテイン|bcaa|eaa/.test(text)){
+    add('#プロテイン','#筋トレ','#トレーニング','#ボディメイク','#たんぱく質');
+  }else if(/ダンベル|筋トレ|トレーニング|腹筋|懸垂|ヨガ|フィットネス|ストレッチ/.test(text)){
+    add('#筋トレグッズ','#トレーニング','#フィットネス','#宅トレ','#運動習慣');
+  }else if(/旅行|宿泊|ホテル|旅館|トラベル|宿泊券|旅行券|温泉|観光|ふるさと納税/.test(text)){
+    add('#旅行','#国内旅行','#ホテル','#旅館','#温泉旅行','#おでかけ','#楽天トラベル','#ふるさと納税');
+  }else if(/インテリア|照明|ラグ|カーテン|ソファ|テーブル|チェア|ベッド|北欧/.test(text)){
+    add('#インテリア','#おしゃれインテリア','#部屋づくり','#一人暮らし','#暮らしを整える');
+  }else if(/ベビー|キッズ|子供|こども|おむつ|抱っこ|入園|通園|育児/.test(text)){
+    add('#子育て','#育児グッズ','#子育て便利グッズ','#時短育児','#ママにおすすめ');
+  }else if(/ワンピ|シャツ|トップス|パンツ|スカート|バッグ|財布|スニーカー|靴|ブラジャー|ファッション/.test(text)){
+    add('#ファッション','#大人カジュアル','#普段使い','#お出かけ','#楽天ファッション');
+  }else if(/スマホ|iphone|android|イヤホン|充電|モバイル|ケーブル|タブレット/.test(text)){
+    add('#スマホグッズ','#ガジェット','#便利アイテム','#家電');
+  }else if(/加湿|ヒータ|暖房|こたつ|湯たんぽ/.test(text)){
+    add('#秋冬支度','#冬支度','#あったかグッズ','#冷え対策','#おうち時間');
+  }
 
-  // Sale / shopping context only when true/relevant
   if(isOnSale(x)) add('#セール','#お買い得','#買い回り');
   if(Number(x.pointRate||1)>=3) add('#ポイントアップ');
 
-  // Audience tags only when product text clearly supports them
   if(/レディース|女性用|女性向け|ママ|主婦/.test(text)) add('#女性向け','#30代女性','#40代女性');
   if(/メンズ|男性用|男性向け|紳士/.test(text)) add('#男性向け','#メンズ');
-  
+
   return tags.join(' ');
 }
 function fit500(body,tagString){
@@ -370,8 +388,14 @@ function makeCopy(x){
   else if(Number(x.rank||999)<=10)hook='【ランキング上位で見つけた、気になるアイテム✨】';
 
   const travel=info.cat==='旅行・おでかけ';
+  const bedding=info.cat==='寝具';
+  const winter=info.cat==='秋冬';
   const bullets=travel
     ? '・次の旅行先を探している\n・ホテルや旅館を比較したい\n・お得に旅行を楽しみたい'
+    : bedding
+    ? '・寒い夜を快適に眠りたい\n・あたたかい寝具を探している\n・洗いやすさや使いやすさも重視したい'
+    : winter
+    ? '・寒さ対策をしたい\n・おうち時間を快適にしたい\n・冬支度を始めたい'
     : '・毎日の手間を少し減らしたい\n・便利で使いやすいものを選びたい\n・口コミや評価も確認して選びたい';
   const note=travel
     ? '※対象施設・利用条件・有効期限・予約条件は商品ページで確認してください。'
