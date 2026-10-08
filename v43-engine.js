@@ -59,14 +59,37 @@ const low=s=>String(s||"").toLowerCase();
 const clean=s=>String(s||"").replace(/【[^】]*】/g," ").replace(/[＼／]/g," ").replace(/\s+/g," ").trim();
 function choose(x,a){const k=String(x.itemCode||x.itemName||"");const n=[...k].reduce((p,c)=>p+c.charCodeAt(0),0);return a[Math.abs(n)%a.length]}
 function understand(x){
- const n=low(x.itemName),c=low(x.catchcopy),d=low(x.itemCaption);let h=null,src="",conf=28;
- for(const r of RULES){if(r[1].test(n)){h=r;src="商品名";conf=96;break}}
- if(!h)for(const r of RULES){if(r[1].test(c)){h=r;src="キャッチコピー";conf=82;break}}
- if(!h)for(const r of RULES){if(r[1].test(d)){h=r;src="商品説明";conf=68;break}}
- if(!h){h=["商品",/./,"商品","商品ページで用途を確認したいアイテム","商品ページ","用途がタイトルだけでは分かりにくい","詳細を見てから選びたい人","用途や仕様を確認してから判断したい",["#楽天ROOM","#楽天市場"],["決めつけ"],"用途・サイズ・仕様"];src="判定できず";conf=30}
- const full=n+" "+c+" "+d,features=[];
- F.forEach(v=>{if(v[0].test(full)&&!features.some(z=>z.label===v[1]))features.push({label:v[1],desc:v[2]})});
- if(src==="商品名"&&features.length)conf=Math.min(99,conf+2);
+ const n=low(x.itemName),c=low(x.catchcopy),d=low(x.itemCaption);
+ // Title is authoritative. Generic accessory terms must not override a specific product.
+ const priorities={"排気口カバー":120,"珪藻土コースター":110,"モバイルバッテリー":108,"ホエイプロテイン":106,"ソイプロテイン":106,"知育玩具":104,"ハンガー":50,"収納ラック":35,"充電器":35,"おもちゃ":30};
+ const generic=new Set(["収納ラック","充電器","おもちゃ"]);
+ function rank(text,source){
+  const matches=[];
+  RULES.forEach((rule,index)=>{
+   const m=rule[1].exec(text);
+   if(!m)return;
+   const specificity=(priorities[rule[0]]||60);
+   // Prefer explicit product phrases and early occurrences in the title.
+   const score=specificity+Math.min(m[0].length,15)*2-Math.min(m.index,120)*0.3;
+   matches.push({rule,index,score,source});
+  });
+  matches.sort((a,b)=>b.score-a.score||a.index-b.index);
+  return matches[0]||null;
+ }
+ const title=rank(n,"商品名");
+ // A vague title should never be classified from unrelated cross-sell copy.
+ const selected=title&&!generic.has(title.rule[0])?title:
+   title?title:null;
+ let h=selected?.rule||null,src=selected?.source||"判定できず",conf=selected?Math.min(96,Math.round(75+(selected.score-55)/4)):25;
+ if(!h){
+  // Caption/catchcopy alone cannot reliably identify a product.
+  h=["商品",/./,"商品","商品ページで用途を確認したいアイテム","商品ページ","用途がタイトルだけでは分かりにくい","詳細を見てから選びたい人","用途や仕様を確認してから判断したい",[],[],"用途・サイズ・仕様"];
+ }
+ // Features need direct title evidence; descriptions often contain unrelated recommendations.
+ const features=[];
+ F.forEach(v=>{if(v[0].test(n)&&!features.some(z=>z.label===v[1]))features.push({label:v[1],desc:v[2]})});
+ if(h[0]==="商品")conf=25;
+ if(generic.has(h[0])&&n.length>70)conf=Math.min(conf,70);
  return {type:h[0],category:h[2],use:h[3],place:h[4],pain:h[5],audience:h[6],benefit:h[7],tags:h[8],ng:h[9],cta:h[10],features:features.slice(0,4),confidence:conf,source:src};
 }
 function hook(x,u){
@@ -112,7 +135,7 @@ function makeBody(w,x,u){
  const deals=[discount?discount[1]+"％OFF":null,points?"ポイント"+points[1]+"倍":null].filter(Boolean);
  if(deals.length)lines.push("✨ "+deals.join("＆")+"！");
  lines.push("",name,"",hook(x,u),"");
- if(u.confidence>=60){
+ if(u.confidence>=65){
   lines.push("これは"+u.use+"。"+u.benefit+"のがポイントです。");
   const feats=u.features.slice(0,4);
   feats.forEach(f=>lines.push("✅ "+f.label+"： "+f.desc));
