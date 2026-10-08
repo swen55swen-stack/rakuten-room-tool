@@ -5,6 +5,7 @@ function onReady(fn){
   frame.addEventListener('load',()=>setTimeout(()=>fn(frame.contentWindow,frame.contentDocument),300));
 }
 const TARGETS={
+  none:{label:'指定なし',audience:'neutral',searches:[]},
   male_interior:{label:'一人暮らし男性インテリア',audience:'male',searches:[['一人暮らし インテリア','100804'],['モダン インテリア','100804']]},
   female_interior:{label:'一人暮らし女性インテリア',audience:'female',searches:[['一人暮らし インテリア','100804'],['北欧 インテリア','100804']]},
   easy_food:{label:'毎日の暮らしが楽な食品',audience:'neutral',searches:[['時短 食品','100227'],['レンジ 簡単','100227']]},
@@ -18,10 +19,13 @@ function seasonalCfg(){
   if(m>=3&&m<=5)return {label:'季節もの',audience:'neutral',searches:[['新生活 インテリア','100804'],['花粉 家電','562637']]};
   return {label:'季節もの',audience:'neutral',searches:[['冷感 夏','100804'],['扇風機 サーキュレーター','562637']]};
 }
-function getCfg(key){return key==='seasonal'?seasonalCfg():(TARGETS[key]||TARGETS.male_interior)}
+function getCfg(key){return key==='seasonal'?seasonalCfg():(TARGETS[key]||TARGETS.none)}
 function relevance(x,target){
   const t=(String(x.itemName||'')+' '+String(x.catchcopy||'')+' '+String(x.itemCaption||'')).toLowerCase();
   let s=0;
+  if(target==='none'){
+    return 20;
+  }
   if(target==='male_interior'||target==='female_interior'){
     if(/インテリア|収納|照明|ラグ|カーテン|テーブル|チェア|ソファ|ベッド|ラック|棚|デスク|クッション/.test(t))s+=45;
     if(/一人暮らし|ワンルーム|省スペース|コンパクト/.test(t))s+=18;
@@ -86,6 +90,7 @@ onReady((w,d)=>{
   if(sale&&!d.getElementById('roomTarget')){
     const box=d.createElement('div');
     box.innerHTML='<label>ROOMターゲット</label><select id="roomTarget">'+
+      '<option value="none">指定なし</option>'+
       '<option value="male_interior">一人暮らし男性インテリア</option>'+
       '<option value="female_interior">一人暮らし女性インテリア</option>'+
       '<option value="easy_food">毎日の暮らしが楽な食品</option>'+
@@ -108,7 +113,7 @@ onReady((w,d)=>{
   const mainPanel=d.querySelector('section.panel');
   if(mainPanel){
     const note=d.createElement('div');note.className='warning';note.style.cssText='background:#fff0f7;border-color:#f2b9d7';
-    note.innerHTML='<b>💗 ROOMで売れそう：</b>7つのターゲットから選び、価格帯・レビュー・評価・セール・商品内容・楽天ランキングの勢いをまとめて点数化します。';
+    note.innerHTML='<b>💗 ROOMで売れそう：</b>「指定なし」または7つのターゲットから選び、価格帯・レビュー・評価・セール・商品内容・楽天ランキングの勢いをまとめて点数化します。';
     mainPanel.parentNode.insertBefore(note,mainPanel);
   }
 
@@ -121,18 +126,25 @@ onReady((w,d)=>{
     const min=Number(d.getElementById('minPrice').value||0),max=Number(d.getElementById('maxPrice').value||99999999);
     const saleOnly=d.getElementById('saleOnly').value==='1';
     localStorage.setItem('roomV42Target',target);
-    w.status('💗 ROOMで売れそうな「'+c.label+'」を探しています…');
+    w.status(target==='none'?'💗 ターゲットを絞らず、ROOMで売れそうな商品を広く探しています…':'💗 ROOMで売れそうな「'+c.label+'」を探しています…');
     d.getElementById('results').innerHTML='<div class="empty">ターゲット商品を取得中…</div>';
     try{
       let all=[];
-      for(const [q,g] of c.searches)all.push(...await w.themeSearch(app,key,affiliate,q,pages,min,max,g));
-      for(const g of [...new Set(c.searches.map(v=>v[1]))]){
-        try{
-          const rt=await w.rankingSearchPeriod(app,key,affiliate,1,g,'realtime','ROOM向けリアルタイム');
-          rt.forEach((x,i)=>{x._realtimeRank=Number(x.rank||i+1);all.push(x)});
-          const dy=await w.rankingSearchPeriod(app,key,affiliate,1,g,'','ROOM向けデイリー');
-          dy.forEach((x,i)=>{x._dailyRank=Number(x.rank||i+1);all.push(x)});
-        }catch(e){}
+      if(target==='none'){
+        const rt=await w.rankingSearchPeriod(app,key,affiliate,pages,'','realtime','ROOM向けリアルタイム');
+        rt.forEach((x,i)=>{x._realtimeRank=Number(x.rank||i+1);all.push(x)});
+        const dy=await w.rankingSearchPeriod(app,key,affiliate,pages,'','','ROOM向けデイリー');
+        dy.forEach((x,i)=>{x._dailyRank=Number(x.rank||i+1);all.push(x)});
+      }else{
+        for(const [q,g] of c.searches)all.push(...await w.themeSearch(app,key,affiliate,q,pages,min,max,g));
+        for(const g of [...new Set(c.searches.map(v=>v[1]))]){
+          try{
+            const rt=await w.rankingSearchPeriod(app,key,affiliate,1,g,'realtime','ROOM向けリアルタイム');
+            rt.forEach((x,i)=>{x._realtimeRank=Number(x.rank||i+1);all.push(x)});
+            const dy=await w.rankingSearchPeriod(app,key,affiliate,1,g,'','ROOM向けデイリー');
+            dy.forEach((x,i)=>{x._dailyRank=Number(x.rank||i+1);all.push(x)});
+          }catch(e){}
+        }
       }
       const map=new Map();
       all.forEach((x,i)=>{
@@ -159,7 +171,7 @@ onReady((w,d)=>{
       w.__roomCandidates=top;
       w.eval('candidates = window.__roomCandidates; render();');
       addChips(d,top,c.label);
-      w.status('完了：💗 '+c.label+'に絞って、ROOMで売れそうな候補を10件作りました。\\n価格帯・レビュー・評価・セール・商品内容・楽天ランキングの勢いを加味しています。');
+      w.status(target==='none'?'完了：💗 ターゲット指定なしで、ROOMで売れそうな候補を10件作りました。\\n価格帯・レビュー・評価・セール・商品内容・楽天ランキングの勢いを加味しています。':'完了：💗 '+c.label+'に絞って、ROOMで売れそうな候補を10件作りました。\\n価格帯・レビュー・評価・セール・商品内容・楽天ランキングの勢いを加味しています。');
     }catch(e){
       console.error(e);
       w.status('取得できませんでした。\\n\\n'+(e.message||e));
