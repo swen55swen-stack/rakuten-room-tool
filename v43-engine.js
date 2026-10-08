@@ -85,20 +85,41 @@ function hook(x,u){
 }
 function review(x){const n=Number(x.reviewCount||0),a=Number(x.reviewAverage||0);if(n>=1000)return "口コミが"+n.toLocaleString()+"件あるので、実際に使った人の感想もかなり見られそう◎";if(n>=100&&a>=4.4)return "レビュー"+n.toLocaleString()+"件・評価"+a.toFixed(2)+"。口コミも一緒に見ておきたいです◎";return ""}
 function makeTags(w,x,u){
- const a=["#楽天ROOM","#楽天市場"].concat(u.tags);
+ const a=["#楽天ROOM","#楽天市場",...u.tags];
  u.features.forEach(f=>a.push("#"+f.label.replace(/\s+/g,"")));
- if(w.isOnSale(x))a.push("#セール","#お買い得");
  const full=low(x.itemName)+" "+low(x.catchcopy);
+ if(/shark|シャーク/.test(full))a.push("#Shark","#シャーク");
+ if(/evopower|エヴォパワー/.test(full))a.push("#EVOPOWER");
+ if(/ハンディクリーナー/.test(full))a.push("#ハンディクリーナー","#コードレス掃除機","#車内掃除","#時短家事");
+ if(w.isOnSale(x))a.push("#セール","#お買い得");
+ if(/ポイント\s*([2-9]|[1-9][0-9])\s*倍/.test(full))a.push("#ポイントアップ");
  if(/女性用|女性向け|レディース/.test(full))a.push("#女性向け");
  if(/メンズ|男性用|男性向け/.test(full))a.push("#男性向け");
- return [...new Set(a)].slice(0,16).join(" ");
+ return [...new Set(a)].filter(t=>!u.ng.some(ng=>low(t).includes(low(ng)))).slice(0,25).join(" ");
 }
 function makeBody(w,x,u){
- const name=clean(x.itemName).slice(0,82),price=w.yen(x.itemPrice),sale=w.saleEndLabel(x)||"",rv=review(x);
- const feat=u.features.length?u.features.slice(0,2).map(v=>v.label).join("・")+"も気になるポイント。":"";
- const intro=hook(x,u);
- const line=u.confidence>=60?"これは"+u.use+"。"+u.benefit+"のがポイントです。":"商品名だけでは用途がはっきりしないので、商品ページで中身を確認してから紹介したいところ。";
- return intro+"\n\n"+name+"\n\n"+line+(feat?"\n"+feat:"")+"\n"+u.audience+"なら、ちょっと詳しく見てみたくなるアイテムです◎\n使う場所は「"+u.place+"」をイメージすると、自分に合うか考えやすいです。"+(sale?"\n🔥 "+sale:"")+(rv?"\n"+rv:"")+"\n\n💰 価格："+price+"\n\n気になったら、"+u.cta+"を商品ページでチェックしてみてください＾＾";
+ const raw=String(x.itemName||""),name=clean(raw).slice(0,82);
+ const price=Number(x.itemPrice||0),count=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0);
+ const sale=w.saleEndLabel(x)||"";
+ const lines=[];
+ if(sale)lines.push("🔥 "+sale);
+ if(count>0&&avg>0&&avg<=5)lines.push("⭐ レビュー"+count.toLocaleString()+"件・評価"+avg.toFixed(2));
+ if(price>0)lines.push("💰 価格："+w.yen(price));
+ const discount=raw.match(/(\d{1,2})\s*[%％]\s*OFF/i);
+ const points=raw.match(/ポイント\s*(\d+)\s*倍/);
+ const deals=[discount?discount[1]+"％OFF":null,points?"ポイント"+points[1]+"倍":null].filter(Boolean);
+ if(deals.length)lines.push("✨ "+deals.join("＆")+"！");
+ lines.push("",name,"",hook(x,u),"");
+ if(u.confidence>=60){
+  lines.push("これは"+u.use+"。"+u.benefit+"のがポイントです。");
+  const feats=u.features.slice(0,4);
+  feats.forEach(f=>lines.push("✅ "+f.label+"： "+f.desc));
+  lines.push("",u.audience+"なら、ちょっと詳しく見てみたくなるアイテムです◎");
+ }else{
+  lines.push("商品の用途や特徴は、商品ページで確かめてから選びたいですね。");
+ }
+ lines.push("","気になったら、"+u.cta+"を商品ページでチェックしてみてください＾＾");
+ return lines.join("\n");
 }
 function install(w,d){
  const oldRender=w.render;
