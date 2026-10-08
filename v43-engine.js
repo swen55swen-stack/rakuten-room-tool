@@ -171,7 +171,28 @@ function install(w,d){
 };
  w.thumbnailIdeas=x=>{const u=understand(x);return [u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)};
  w.recommendText=x=>{const u=understand(x);const fs=u.features.map(v=>v.label).join(" / ")||"特徴は商品ページで確認";return "🧠 商品判定："+u.type+"｜理解度 "+u.confidence+"%（"+u.source+"）\n🎯 用途："+u.use+"\n📍 使う場所："+u.place+"\n💡 特徴："+fs+"\n👤 向いていそう："+u.audience+"\n🚫 混ぜない文脈："+u.ng.join(" / ")};
- w.render=function(){oldRender();setTimeout(()=>{[...d.querySelectorAll("article.card")].forEach((card,i)=>{let x=null;try{x=w.eval("candidates["+i+"]")}catch(e){}if(!x&&w.__roomCandidates)x=w.__roomCandidates[i];if(!x)return;const u=understand(x),chips=card.querySelector(".chips");if(chips&&!chips.querySelector(".v43understand")){const a=d.createElement("span");a.className="chip v43understand";a.textContent="🧠 "+u.type+" "+u.confidence+"%";a.style.cssText="background:#eaf2ff;color:#174ea6;font-weight:900";chips.prepend(a)}})},0)};
+ w.render=function(){
+  oldRender();
+  const items=w.__roomCandidates||[];
+  [...d.querySelectorAll("article.card")].forEach((card,i)=>{
+   let x=items[i];
+   if(!x){try{x=w.eval("candidates["+i+"]")}catch(e){}}
+   if(!x)return;
+   const u=understand(x),chips=card.querySelector(".chips");
+   if(chips&&!chips.querySelector(".v43understand")){
+    const a=d.createElement("span");a.className="chip v43understand";
+    a.textContent="🧠 "+u.type+" "+u.confidence+"%";
+    a.style.cssText="background:#eaf2ff;color:#174ea6;font-weight:900";chips.prepend(a);
+   }
+   const ta=card.querySelector("textarea[id^='copy-']");
+   if(ta){
+    const copy=w.makeCopy(x);
+    ta.value=copy;
+    const counter=ta.nextElementSibling;
+    if(counter&&counter.textContent.includes("文字数"))counter.textContent="文字数："+copy.length+" / 500（V43改良版）";
+   }
+  });
+ };
  const h=d.querySelector("h1");if(h)h.textContent="楽天ROOM 自動リサーチ＋連続投稿 V43";
  const sub=d.querySelector("header .sub");if(sub)sub.textContent="商品を理解してから、その商品に合う紹介文を作る";
  const first=d.querySelector("section.panel");
