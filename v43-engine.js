@@ -158,32 +158,59 @@ function install(w,d){
  w.productUnderstanding=understand;
  w.itemProfile=x=>{const u=understand(x);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
  w.makeCopy=x=>{
-  const u=understand(x),allTags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
+  const u=understand(x),tags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
   const body=makeBody(w,x,u);
-  const essential=allTags.slice(0,Math.min(8,allTags.length));
-  const budget=500-(" "+essential.join(" ")).length;
-  let lines=body.split("\n");
-  // Prefer removing optional sentences to chopping mid-sentence.
-  while(lines.join("\n").length>budget&&lines.length>9){
-   const idx=lines.findIndex((v,i)=>i>6&&(/使う頻度|実際に購入した人|使う場面を想像|毎日使うものなら/.test(v)||v.startsWith("✅ ")));
-   if(idx<0)break;
-   lines.splice(idx,1);
+  // Build a complete post, including hashtags, aiming for 400-490 characters.
+  const chosen=tags.slice(0,Math.min(12,tags.length));
+  const tagLength=()=>chosen.join(" ").length;
+  const limit=500-2-tagLength();
+  const extras=u.confidence>=65?[
+   "選ぶときは、実際に使う場所や使う頻度も考えておくと、自分に合うか判断しやすいですね。",
+   "写真だけでは分かりにくい部分もあるので、サイズ感やお手入れの方法までチェックしておきたいところ。",
+   "購入前にレビューを見て、良かった点だけでなく気になる点も比較しておくと安心です◎",
+   "毎日の暮らしに取り入れるなら、使い勝手や収納のしやすさも大事なポイントですね。"
+  ]:[
+   "商品名だけでは分からないこともあるので、使い方やサイズなどの詳しい仕様は商品ページで確認したいですね。",
+   "置く場所や使う頻度を想像してみると、自分の暮らしに合うかどうか判断しやすそうです。",
+   "気になるところはレビューもチェック。良い評価だけでなく、購入前に知っておきたい注意点も見ておきたいです◎",
+   "ほかの商品と比較するときは、価格だけでなく付属品やお手入れのしやすさも確認したいところ。"
+  ];
+  let paragraphs=body.split("\n");
+  // Place extra context before the closing call to action, not after the hashtags.
+  const closing=paragraphs.pop();
+  while(paragraphs.length&&paragraphs[paragraphs.length-1]==="")paragraphs.pop();
+  let text=paragraphs.join("\n").trim();
+  const target=Math.min(limit,Math.max(360,limit-25));
+  for(const extra of extras){
+   const candidate=text+"\n\n"+extra+"\n\n"+closing;
+   if(candidate.length<=limit && (text+"\n\n"+closing).length<target)text+="\n\n"+extra;
   }
-  let result=lines.join("\n").trim();
-  if(result.length>budget){
+  let result=text+"\n\n"+closing;
+  if(result.length>limit){
+   // Drop optional middle paragraphs before dropping product facts or closing line.
+   let parts=result.split("\n\n");
+   while(parts.join("\n\n").length>limit&&parts.length>3)parts.splice(parts.length-2,1);
+   result=parts.join("\n\n");
+  }
+  if(result.length>limit){
+   // Prefer fewer tags over shortening the product description.
+   while(chosen.length>2&&result.length+2+tagLength()>500)chosen.pop();
+  }
+  if(result.length+2+tagLength()>500){
    const sentences=result.split(/(?<=[。！？♪◎])|\n/).map(v=>v.trim()).filter(Boolean);
    result="";
-   for(const part of sentences){
-    const next=result?(result+"\n"+part):part;
-    if(next.length>budget)break;
+   const max=500-2-tagLength();
+   for(const sentence of sentences){
+    const next=result?result+"\n"+sentence:sentence;
+    if(next.length>max)break;
     result=next;
    }
   }
-  if(!result)result=body.slice(0,Math.max(0,budget-1))+"…";
-  const remaining=500-result.length-1;
-  const tags=[];
-  for(const t of allTags){if(tags.join(" ").length+t.length+(tags.length?1:0)<=remaining)tags.push(t);}
-  return result+(tags.length?"\n"+tags.join(" "):"");
+  // Fill spare space with relevant tags without exceeding the ROOM limit.
+  for(const t of tags.slice(chosen.length)){
+   if(result.length+2+tagLength()+1+t.length<=500)chosen.push(t);
+  }
+  return (result+"\n\n"+chosen.join(" ")).trim();
  };
  w.thumbnailIdeas=x=>{const u=understand(x);return [u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)};
  w.recommendText=x=>{const u=understand(x);const fs=u.features.map(v=>v.label).join(" / ")||"特徴は商品ページで確認";return "🧠 商品判定："+u.type+"｜理解度 "+u.confidence+"%（"+u.source+"）\n🎯 用途："+u.use+"\n📍 使う場所："+u.place+"\n💡 特徴："+fs+"\n👤 向いていそう："+u.audience+"\n🚫 混ぜない文脈："+u.ng.join(" / ")};
