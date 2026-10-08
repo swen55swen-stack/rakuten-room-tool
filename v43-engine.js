@@ -1,5 +1,6 @@
 (()=>{
 const RULES=[
+["布団乾燥機",/布団乾燥機|ふとん乾燥機|ふとん乾燥器|布団乾燥器/,"寝具家電","布団に温風を送り乾燥やあたために使う家電","寝室・布団・靴（対応機種のみ）","布団の湿気や寝る前の冷たさが気になる","布団の乾燥やあたためを手軽にしたい人","布団の乾燥やあたために使える",["#布団乾燥機","#ふとん乾燥機","#布団乾燥","#寝具家電","#湿気対策","#梅雨対策","#冬支度","#布団あたため"],["掃除機","コードレス掃除機","吸引力","ゴミ捨て"],"対応する布団サイズ・ノズル数・運転モード・消費電力"],
 ["排気口カバー",/排気口(?:カバー|ガード)|グリルガード|コンロ(?:カバー|ガード)/,"キッチン用品","コンロの排気口周りを汚れから守るキッチン用品","キッチン・コンロ周り","調理中の油はねや汚れが気になる","コンロ周りを清潔に保ちたい人","油はねなどの汚れ対策に役立つ",["#排気口カバー","#コンロカバー","#キッチングッズ","#油はねガード","#汚れ防止","#コンロ掃除","#キッチン掃除","#家事ラク","#お手入れ簡単"],["収納ラック","整理収納","部屋づくり","寝具"],"対応コンロ・幅・奥行き・耐熱温度・お手入れ方法"],
 ["枕",/枕|まくら|ピロー/,"寝具","頭と首を支えて眠るための寝具","寝室","今の枕がしっくりこない・寝心地を見直したい","睡眠環境を見直したい人","毎晩使う寝具だから、高さや硬さを自分に合わせて選びたい",["#枕","#まくら","#快眠","#睡眠環境","#枕選び"],["収納","掛け布団","冬支度"],"高さ・硬さ・素材・サイズ・お手入れ方法"],
 ["掛け布団",/掛け布団|掛布団/,"寝具","体に掛けて眠るための寝具","寝室","寝る時の寒さや布団の重さが気になる","あたたかく眠れる寝具を探している人","季節に合う掛け布団を選んで寝床を整えやすい",["#掛け布団","#寝具","#快眠","#寝室"],["収納グッズ"],"サイズ・重さ・素材・洗濯方法"],
@@ -61,7 +62,7 @@ function choose(x,a){const k=String(x.itemCode||x.itemName||"");const n=[...k].r
 function understand(x){
  const n=low(x.itemName),c=low(x.catchcopy),d=low(x.itemCaption);
  // Title is authoritative. Generic accessory terms must not override a specific product.
- const priorities={"排気口カバー":120,"珪藻土コースター":110,"モバイルバッテリー":108,"ホエイプロテイン":106,"ソイプロテイン":106,"知育玩具":104,"ハンガー":50,"収納ラック":35,"充電器":35,"おもちゃ":30};
+ const priorities={"布団乾燥機":130,"排気口カバー":120,"珪藻土コースター":110,"モバイルバッテリー":108,"ホエイプロテイン":106,"ソイプロテイン":106,"知育玩具":104,"ハンガー":50,"収納ラック":35,"充電器":35,"おもちゃ":30};
  const generic=new Set(["収納ラック","充電器","おもちゃ"]);
  function rank(text,source){
   const matches=[];
@@ -87,7 +88,7 @@ function understand(x){
  }
  // Features need direct title evidence; descriptions often contain unrelated recommendations.
  const features=[];
- F.forEach(v=>{if(v[0].test(n)&&!features.some(z=>z.label===v[1]))features.push({label:v[1],desc:v[2]})});
+ F.forEach(v=>{if(v[0].test(n)&&!features.some(z=>z.label===v[1])&&!(v[1]==="折りたたみ"&&!/折りたたみ(?:式|可能)?|折畳|折り畳み/.test(n)))features.push({label:v[1],desc:v[2]})});
  if(h[0]==="商品")conf=25;
  if(generic.has(h[0])&&n.length>70)conf=Math.min(conf,70);
  return {type:h[0],category:h[2],use:h[3],place:h[4],pain:h[5],audience:h[6],benefit:h[7],tags:h[8],ng:h[9],cta:h[10],features:features.slice(0,4),confidence:conf,source:src};
@@ -96,6 +97,7 @@ function hook(x,u){
  const M={
   "枕":["毎晩使う枕、ちゃんと自分に合ってるか気になりません？😴","朝起きた時、枕そろそろ見直そうかなって思うことありません？","枕って毎日使うからこそ、高さや寝心地って大事ですよね。"],
   "珪藻土コースター":["冷たい飲み物の水滴で、テーブルがびちゃっとなるの気になりません？🥤","コップを持ち上げたら水の輪っか…って地味に気になりますよね。","デスクで冷たい飲み物を飲む人、コースターの水滴問題ありません？"],
+  "布団乾燥機":["布団の湿気や寝る前の冷たさ、気になりませんか？🛏️","梅雨の湿気や冬の冷たい布団、手軽にケアできたらうれしいですよね。"],
   "排気口カバー":["コンロの排気口まわり、油はねや汚れが気になりませんか？🍳","キッチンの掃除、少しでもラクにできたらうれしいですよね。"],
   "収納ラック":["ここにもう少し収納があれば…って場所ありません？","物の定位置が決まるだけで、部屋ってかなり片付けやすくなりますよね。","気づくと物が増えて置き場所に困る人、これちょっと気になるかも。"],
   "掃除機":["掃除って、少しでも手間が減るとかなり助かりますよね。","毎日の床掃除、もっとサッと終わらせたいと思いません？"],
@@ -116,7 +118,7 @@ function makeTags(w,x,u){
  if(/shark|シャーク/.test(full))a.push("#Shark","#シャーク");
  if(/evopower|エヴォパワー/.test(full))a.push("#EVOPOWER");
  if(/ハンディクリーナー/.test(full))a.push("#ハンディクリーナー","#コードレス掃除機","#車内掃除","#時短家事");
- if(w.isOnSale(x))a.push("#セール","#お買い得");
+ if(w.isOnSale(x)&&/sale|セール|%\s*off|％\s*off|割引/i.test(String(x.itemName||"")+" "+String(x.catchcopy||"")))a.push("#セール","#お買い得");
  if(/ポイント\s*([2-9]|[1-9][0-9])\s*倍/.test(full))a.push("#ポイントアップ");
  if(/女性用|女性向け|レディース/.test(full))a.push("#女性向け");
  if(/メンズ|男性用|男性向け/.test(full))a.push("#男性向け");
@@ -127,7 +129,7 @@ function makeBody(w,x,u){
  const price=Number(x.itemPrice||0),count=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0);
  const sale=w.saleEndLabel(x)||"";
  const lines=[];
- if(sale)lines.push("🔥 "+sale);
+ if(sale && /sale|セール|までSALE|割引|off/i.test(sale))lines.push("🔥 "+sale);
  if(count>0&&avg>0&&avg<=5)lines.push("⭐ レビュー"+count.toLocaleString()+"件・評価"+avg.toFixed(2));
  if(price>0)lines.push("💰 価格："+w.yen(price));
  const discount=raw.match(/(\d{1,2})\s*[%％]\s*OFF/i);
