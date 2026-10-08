@@ -160,6 +160,112 @@ function install(w,d){
  if(w.__v44Installed)return;
  w.__v44Installed=true;
  const oldRender=w.render;
+
+ // V44 hotfix: ROOMターゲットに「指定なし」を必ず追加
+ const roomTarget=d.getElementById("roomTarget");
+ if(roomTarget&&!roomTarget.querySelector('option[value="none"]')){
+  const opt=d.createElement("option");
+  opt.value="none";
+  opt.textContent="指定なし";
+  roomTarget.insertBefore(opt,roomTarget.firstChild);
+ }
+
+ // 古いV42がキャッシュされていても「指定なし」はV44側で動かす
+ const originalRoomResearch=typeof w.roomResearch==="function"?w.roomResearch:null;
+ async function v44NoneRoomResearch(){
+  const app=d.getElementById("appId")?.value.trim()||"";
+  const key=d.getElementById("accessKey")?.value.trim()||"";
+  if(!app||!key){w.status("Application IDとAccess Keyを入力してください。");return}
+  const pages=Math.min(Number(d.getElementById("pages")?.value||2),3);
+  const affiliate=d.getElementById("affiliateId")?.value.trim()||"";
+  const min=Number(d.getElementById("minPrice")?.value||0);
+  const max=Number(d.getElementById("maxPrice")?.value||99999999);
+  const saleOnly=d.getElementById("saleOnly")?.value==="1";
+  try{
+   localStorage.setItem("roomV42Target","none");
+   w.status("💗 ターゲットを絞らず、ROOMで売れそうな商品を広く探しています…");
+   const results=d.getElementById("results");
+   if(results)results.innerHTML='<div class="empty">指定なしで候補を取得中…</div>';
+
+   let all=[];
+   const rt=await w.rankingSearchPeriod(app,key,affiliate,pages,"","realtime","ROOM向けリアルタイム");
+   rt.forEach((x,i)=>{x._realtimeRank=Number(x.rank||i+1);all.push(x)});
+   const dy=await w.rankingSearchPeriod(app,key,affiliate,pages,"","","ROOM向けデイリー");
+   dy.forEach((x,i)=>{x._dailyRank=Number(x.rank||i+1);all.push(x)});
+
+   const map=new Map();
+   all.forEach((x,i)=>{
+    if(!x?.itemCode)return;
+    const old=map.get(x.itemCode);
+    if(old){
+     if(x._realtimeRank)old._realtimeRank=x._realtimeRank;
+     if(x._dailyRank)old._dailyRank=x._dailyRank;
+    }else{
+     if(!x.rank)x.rank=i+1;
+     map.set(x.itemCode,x);
+    }
+   });
+
+   let arr=[...map.values()].filter(x=>{
+    const p=Number(x.itemPrice||0);
+    return p>=min&&p<=max&&w.directUrl(x)&&Number(x.availability??1)===1&&!w.isExcludedProduct(x)&&(!saleOnly||w.isOnSale(x));
+   });
+
+   const hist=w.updateMonthlyHistory(arr);
+   arr.forEach(x=>{
+    const base=w.finalScore(x,"mix",hist);
+    const reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0);
+    let bonus=0;
+    if(Number(x._realtimeRank||999)<=30)bonus+=28;
+    else if(Number(x._realtimeRank||999)<=100)bonus+=14;
+    if(Number(x._dailyRank||999)<=30)bonus+=18;
+    else if(Number(x._dailyRank||999)<=100)bonus+=9;
+    if(reviews>=50&&reviews<=3000)bonus+=12;
+    if(avg>=4.5)bonus+=12; else if(avg>=4.3)bonus+=8;
+    if(price>=1000&&price<=8000)bonus+=14; else if(price>8000&&price<=15000)bonus+=7;
+    if(w.isOnSale(x))bonus+=15;
+    x._room=Math.round(base*.55+bonus);
+    x._score=x._room;
+   });
+   arr.sort((a,b)=>b._room-a._room||Number(a.rank||999)-Number(b.rank||999));
+   const top=arr.slice(0,10);
+   if(!top.length)throw new Error("条件に合う商品が見つかりませんでした。価格条件やセール絞り込みを変えてください。");
+
+   w.__roomCandidates=top;
+   w.eval("candidates = window.__roomCandidates; render();");
+
+   setTimeout(()=>{
+    [...d.querySelectorAll("article.card")].forEach((card,i)=>{
+     const x=top[i],chips=card.querySelector(".chips");
+     if(!x||!chips||chips.querySelector(".v44roomnone"))return;
+     const a=d.createElement("span");
+     a.className="chip v44roomnone";
+     a.textContent="💗 ROOM売れそう "+x._room;
+     a.style.cssText="background:#ffeaf5;color:#a11663;font-weight:900";
+     const b=d.createElement("span");
+     b.className="chip v44roomnone";
+     b.textContent="指定なし";
+     b.style.cssText="background:#fff5fb;color:#8a2459";
+     chips.prepend(b);chips.prepend(a);
+    });
+   },0);
+
+   w.status("完了：💗 ターゲット指定なしで、ROOMで売れそうな候補を10件作りました。\nリアルタイム順位・デイリー順位・レビュー・評価・価格・セールを加味しています。");
+  }catch(e){
+   console.error(e);
+   w.status("取得できませんでした。\n\n"+(e.message||e));
+   const results=d.getElementById("results");
+   if(results)results.innerHTML='<div class="empty">取得に失敗しました。</div>';
+  }
+ }
+
+ if(originalRoomResearch){
+  w.roomResearch=function(){
+   const target=d.getElementById("roomTarget")?.value;
+   if(target==="none")return v44NoneRoomResearch();
+   return originalRoomResearch();
+  };
+ }
  w.productUnderstanding=understand;
  w.itemProfile=x=>{const u=understand(x);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
  w.makeCopy=x=>{
