@@ -346,12 +346,13 @@ function install(w,d){
  w.makeCopy=x=>{
   const u=adaptFashionAudience(x,understand(x),d),tags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
   const body=makeBody(w,x,u);
+  const fashionByTitle=/ジャケット|ブルゾン|アウター|コート|シャツ|トップス|スウェット|トレーナー|ニット|セーター|パンツ|スカート|ワンピース|tシャツ|ｔシャツ|カットソー/.test(low(x.itemName));
   // Build a complete post, including hashtags, aiming for 400-490 characters.
   const chosen=tags.slice(0,Math.min(12,tags.length));
   const tagLength=()=>chosen.join(" ").length;
   const limit=500-2-tagLength();
   const extras=u.confidence>=65?(
-   /ファッション|子供服/.test(u.category)?[
+   (/ファッション|子供服/.test(u.category)||fashionByTitle)?[
     "サイズ表だけでなく、着丈や身幅なども確認して自分の好みに合うシルエットか見ておきたいですね。",
     "手持ちのパンツやアウターと合わせやすいか想像すると、着回しやすさも判断しやすそうです。",
     "素材感や厚み、洗濯表示も見ておくと、普段使いしやすいか選びやすいですね。",
@@ -362,12 +363,18 @@ function install(w,d){
     "購入前にレビューを見て、良かった点だけでなく気になる点も比較しておくと安心です◎",
     "毎日の暮らしに取り入れるなら、使い勝手やお手入れのしやすさも大事なポイントですね。"
    ]
-  ):[
-   "商品名だけでは分からないこともあるので、使い方やサイズなどの詳しい仕様は商品ページで確認したいですね。",
-   "置く場所や使う頻度を想像してみると、自分の暮らしに合うかどうか判断しやすそうです。",
-   "気になるところはレビューもチェック。良い評価だけでなく、購入前に知っておきたい注意点も見ておきたいです◎",
-   "ほかの商品と比較するときは、価格だけでなく付属品やお手入れのしやすさも確認したいところ。"
-  ];
+  ):(
+   fashionByTitle?[
+    "サイズ表や着丈・身幅を見ながら、自分が着たいシルエットに合うか確認したいですね。",
+    "手持ちの服と合わせやすいか想像すると、着回しやすさも判断しやすそうです。",
+    "素材感や厚み、洗濯表示まで見ておくと、普段使いしやすいか選びやすいですね。",
+    "レビューがある場合は、実際のサイズ感や色味についての感想も参考にしたいところ◎"
+   ]:[
+    "商品名だけでは分からないこともあるので、使い方やサイズなどの詳しい仕様は商品ページで確認したいですね。",
+    "気になるところはレビューもチェック。良い評価だけでなく、購入前に知っておきたい注意点も見ておきたいです◎",
+    "ほかの商品と比較するときは、価格だけでなく付属品やお手入れのしやすさも確認したいところ。"
+   ]
+  );
   let paragraphs=body.split("\n");
   // Place extra context before the closing call to action, not after the hashtags.
   const closing=paragraphs.pop();
@@ -402,6 +409,14 @@ function install(w,d){
   // Fill spare space with relevant tags without exceeding the ROOM limit.
   for(const t of tags.slice(chosen.length)){
    if(result.length+2+tagLength()+1+t.length<=500)chosen.push(t);
+  }
+  if(fashionByTitle){
+   result=result
+    .replace(/選ぶときは、実際に使う場所や使う頻度も考えておくと、自分に合うか判断しやすいですね。?/g,"")
+    .replace(/置く場所や使う頻度を想像してみると、自分の暮らしに合うかどうか判断しやすそうです。?/g,"")
+    .replace(/収納場所も気になるポイント。使う頻度や置き場所もイメージしておきたいところです。?/g,"")
+    .replace(/\n{3,}/g,"\n\n")
+    .trim();
   }
   return (result+"\n\n"+chosen.join(" ")).trim();
  };
