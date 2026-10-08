@@ -113,6 +113,43 @@ function understand(x){
  }
  return {type:h[0],category:h[2],use:h[3],place:h[4],pain:h[5],audience:h[6],benefit:h[7],tags:h[8],ng:h[9],cta:h[10],features:features.slice(0,4),confidence:conf,source:src};
 }
+function adaptFashionAudience(x,u,d){
+ const n=low(x.itemName),cc=low(x.catchcopy);
+ if(!/ファッション|子供服/.test(u.category))return u;
+ let gender="";
+ if(/メンズ|男性|紳士|men(?:'s)?/.test(n+" "+cc))gender="male";
+ else if(/レディース|女性|婦人|women(?:'s)?/.test(n+" "+cc))gender="female";
+ if(!gender&&d){
+  const g=d.getElementById("genreId");
+  const gtext=g?.options?.[g.selectedIndex]?.textContent||"";
+  const rt=d.getElementById("roomTarget");
+  const rttext=rt?.options?.[rt.selectedIndex]?.textContent||"";
+  const ui=(gtext+" "+rttext).toLowerCase();
+  if(/メンズ|男性/.test(ui))gender="male";
+  else if(/レディース|女性/.test(ui))gender="female";
+ }
+ if(gender==="male"){
+  u={...u};
+  u.category="メンズファッション";
+  u.audience="メンズファッションを探している人";
+  u.tags=[...u.tags.filter(t=>!/レディース|女性/.test(t)),"#メンズファッション","#メンズコーデ"];
+  u.ng=[...new Set([...(u.ng||[]),"レディース","女性向け"])];
+ }else if(gender==="female"){
+  u={...u};
+  u.category="レディースファッション";
+  u.audience="レディースファッションを探している人";
+  u.tags=[...u.tags.filter(t=>!/メンズ|男性/.test(t)),"#レディースファッション"];
+  u.ng=[...new Set([...(u.ng||[]),"メンズ","男性向け"])];
+ }else if(u.type==="ニット・セーター"){
+  // 性別が取れないニットは固定でレディース扱いしない
+  u={...u};
+  u.category="ファッション";
+  u.audience="ニットやスウェットを探している人";
+  u.tags=u.tags.filter(t=>!/レディース|女性/.test(t));
+  u.ng=[...new Set([...(u.ng||[]),"性別の決めつけ"])];
+ }
+ return u;
+}
 function hook(x,u){
  const M={
   "ジャケット・アウター":["季節の変わり目、さっと羽織れるアウターがあると便利ですよね🧥","一枚で雰囲気を変えやすいアウター、ついチェックしたくなりません？","普段着にもお出かけにも使いやすいジャケットって、出番が多いですよね。"],
@@ -144,8 +181,8 @@ function makeTags(w,x,u){
  if(/ハンディクリーナー/.test(full))a.push("#ハンディクリーナー","#コードレス掃除機","#車内掃除","#時短家事");
  if(w.isOnSale(x)&&/sale|セール|%\s*off|％\s*off|割引/i.test(String(x.itemName||"")+" "+String(x.catchcopy||"")))a.push("#セール","#お買い得");
  if(/ポイント\s*([2-9]|[1-9][0-9])\s*倍/.test(full))a.push("#ポイントアップ");
- if(/女性用|女性向け|レディース/.test(full))a.push("#女性向け");
- if(/メンズ|男性用|男性向け/.test(full))a.push("#男性向け");
+ if(/女性用|女性向け|レディース/.test(full)&&u.category!=="メンズファッション")a.push("#女性向け");
+ if(/メンズ|男性用|男性向け/.test(full)&&u.category!=="レディースファッション")a.push("#男性向け");
  return [...new Set(a)].filter(t=>!u.ng.some(ng=>low(t).includes(low(ng)))).slice(0,25).join(" ");
 }
 function makeBody(w,x,u){
@@ -292,21 +329,28 @@ function install(w,d){
    return originalRoomResearch();
   };
  }
- w.productUnderstanding=understand;
- w.itemProfile=x=>{const u=understand(x);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
+ w.productUnderstanding=x=>adaptFashionAudience(x,understand(x),d);
+ w.itemProfile=x=>{const u=adaptFashionAudience(x,understand(x),d);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
  w.makeCopy=x=>{
-  const u=understand(x),tags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
+  const u=adaptFashionAudience(x,understand(x),d),tags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
   const body=makeBody(w,x,u);
   // Build a complete post, including hashtags, aiming for 400-490 characters.
   const chosen=tags.slice(0,Math.min(12,tags.length));
   const tagLength=()=>chosen.join(" ").length;
   const limit=500-2-tagLength();
-  const extras=u.confidence>=65?[
-   "選ぶときは、実際に使う場所や使う頻度も考えておくと、自分に合うか判断しやすいですね。",
-   "写真だけでは分かりにくい部分もあるので、サイズ感やお手入れの方法までチェックしておきたいところ。",
-   "購入前にレビューを見て、良かった点だけでなく気になる点も比較しておくと安心です◎",
-   /ファッション|子供服/.test(u.category)?"毎日着るものなら、サイズ感だけでなく洗濯後のお手入れや着回しやすさも見ておきたいですね。":"毎日の暮らしに取り入れるなら、使い勝手やお手入れのしやすさも大事なポイントですね。"
-  ]:[
+  const extras=u.confidence>=65?(
+   /ファッション|子供服/.test(u.category)?[
+    "サイズ表だけでなく、着丈や身幅なども確認して自分の好みに合うシルエットか見ておきたいですね。",
+    "手持ちのパンツやアウターと合わせやすいか想像すると、着回しやすさも判断しやすそうです。",
+    "素材感や厚み、洗濯表示も見ておくと、普段使いしやすいか選びやすいですね。",
+    "レビューがある場合は、サイズ感や実際の色味についての感想も参考にしたいところ◎"
+   ]:[
+    "選ぶときは、実際に使う場所や使う頻度も考えておくと、自分に合うか判断しやすいですね。",
+    "写真だけでは分かりにくい部分もあるので、サイズ感やお手入れの方法までチェックしておきたいところ。",
+    "購入前にレビューを見て、良かった点だけでなく気になる点も比較しておくと安心です◎",
+    "毎日の暮らしに取り入れるなら、使い勝手やお手入れのしやすさも大事なポイントですね。"
+   ]
+  ):[
    "商品名だけでは分からないこともあるので、使い方やサイズなどの詳しい仕様は商品ページで確認したいですね。",
    "置く場所や使う頻度を想像してみると、自分の暮らしに合うかどうか判断しやすそうです。",
    "気になるところはレビューもチェック。良い評価だけでなく、購入前に知っておきたい注意点も見ておきたいです◎",
@@ -349,8 +393,8 @@ function install(w,d){
   }
   return (result+"\n\n"+chosen.join(" ")).trim();
  };
- w.thumbnailIdeas=x=>{const u=understand(x);return [u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)};
- w.recommendText=x=>{const u=understand(x);const fs=u.features.map(v=>v.label).join(" / ")||"特徴は商品ページで確認";return "🧠 商品判定："+u.type+"｜理解度 "+u.confidence+"%（"+u.source+"）\n🎯 用途："+u.use+"\n📍 使う場所："+u.place+"\n💡 特徴："+fs+"\n👤 向いていそう："+u.audience+"\n🚫 混ぜない文脈："+u.ng.join(" / ")};
+ w.thumbnailIdeas=x=>{const u=adaptFashionAudience(x,understand(x),d);return [u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)};
+ w.recommendText=x=>{const u=adaptFashionAudience(x,understand(x),d);const fs=u.features.map(v=>v.label).join(" / ")||"特徴は商品ページで確認";return "🧠 商品判定："+u.type+"｜理解度 "+u.confidence+"%（"+u.source+"）\n🎯 用途："+u.use+"\n📍 使う場所："+u.place+"\n💡 特徴："+fs+"\n👤 向いていそう："+u.audience+"\n🚫 混ぜない文脈："+u.ng.join(" / ")};
  w.render=function(){
   oldRender();
   const items=w.__roomCandidates||[];
@@ -358,7 +402,7 @@ function install(w,d){
    let x=items[i];
    if(!x){try{x=w.eval("candidates["+i+"]")}catch(e){}}
    if(!x)return;
-   const u=understand(x),chips=card.querySelector(".chips");
+   const u=adaptFashionAudience(x,understand(x),d),chips=card.querySelector(".chips");
    if(chips&&!chips.querySelector(".v45understand")){
     const a=d.createElement("span");a.className="chip v45understand";
     a.textContent="🧠 "+u.type+" "+u.confidence+"%";
