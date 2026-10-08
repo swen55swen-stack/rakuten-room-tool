@@ -138,6 +138,7 @@ function makeBody(w,x,u){
  if(count>0&&avg>0&&avg<=5)lines.push("⭐ レビュー"+count.toLocaleString()+"件・評価"+avg.toFixed(2));
  if(price>0)lines.push("💰 価格："+w.yen(price));
  const discount=raw.match(/(\d{1,2})\s*[%％]\s*OFF/i),points=raw.match(/ポイント\s*(\d+)\s*倍/);
+ const conditional=/[２2３3４4５5]点目|まとめ買い|対象商品|クーポン利用|クーポンで/i.test(raw);
  const deals=[discount?(conditional?"条件付き割引あり（詳細要確認）":discount[1]+"％OFF"):null,points?"ポイント"+points[1]+"倍":null].filter(Boolean);
  if(deals.length)lines.push("✨ "+deals.join("＆")+"！");
  lines.push("",name,"",hook(x,u),"");
