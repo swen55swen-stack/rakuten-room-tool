@@ -125,27 +125,25 @@ function makeTags(w,x,u){
  return [...new Set(a)].filter(t=>!u.ng.some(ng=>low(t).includes(low(ng)))).slice(0,25).join(" ");
 }
 function makeBody(w,x,u){
- const raw=String(x.itemName||""),name=clean(raw).slice(0,82);
+ const raw=String(x.itemName||""),name=clean(raw).slice(0,65);
  const price=Number(x.itemPrice||0),count=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0);
- const sale=w.saleEndLabel(x)||"";
- const lines=[];
- if(sale && /sale|セール|までSALE|割引|off/i.test(sale))lines.push("🔥 "+sale);
+ const sale=w.saleEndLabel(x)||"",lines=[];
+ if(sale&&/sale|セール|割引|off/i.test(sale))lines.push("🔥 "+sale);
  if(count>0&&avg>0&&avg<=5)lines.push("⭐ レビュー"+count.toLocaleString()+"件・評価"+avg.toFixed(2));
  if(price>0)lines.push("💰 価格："+w.yen(price));
- const discount=raw.match(/(\d{1,2})\s*[%％]\s*OFF/i);
- const points=raw.match(/ポイント\s*(\d+)\s*倍/);
+ const discount=raw.match(/(\d{1,2})\s*[%％]\s*OFF/i),points=raw.match(/ポイント\s*(\d+)\s*倍/);
  const deals=[discount?discount[1]+"％OFF":null,points?"ポイント"+points[1]+"倍":null].filter(Boolean);
  if(deals.length)lines.push("✨ "+deals.join("＆")+"！");
  lines.push("",name,"",hook(x,u),"");
  if(u.confidence>=65){
-  lines.push("これは"+u.use+"。"+u.benefit+"のがポイントです。");
-  const feats=u.features.slice(0,4);
-  feats.forEach(f=>lines.push("✅ "+f.label+"： "+f.desc));
-  lines.push("",u.audience+"なら、ちょっと詳しく見てみたくなるアイテムです◎");
+  lines.push(u.use+"。"+u.benefit+"のが魅力です。");
+  u.features.slice(0,3).forEach(f=>lines.push("✅ "+f.label+"： "+f.desc));
+  lines.push("","「"+u.pain+"」という人にも、チェックしてほしいアイテム😊");
+  lines.push(u.place+"で使う場面を想像しながら、使いやすさや置き場所を考えて選びたいですね。");
  }else{
-  lines.push("商品の用途や特徴は、商品ページで確かめてから選びたいですね。");
+  lines.push("気になるアイテムですが、用途や特徴は商品ページで確認してから選びたいですね。");
  }
- lines.push("","気になったら、"+u.cta+"を商品ページでチェックしてみてください＾＾");
+ lines.push("","気になったら、"+u.cta+"を商品ページで確認してみてください♪");
  return lines.join("\n");
 }
 function install(w,d){
@@ -154,7 +152,23 @@ function install(w,d){
  const oldRender=w.render;
  w.productUnderstanding=understand;
  w.itemProfile=x=>{const u=understand(x);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
- w.makeCopy=x=>{const u=understand(x);return w.fit500(makeBody(w,x,u)+"\n\n",makeTags(w,x,u))};
+ w.makeCopy=x=>{
+ const u=understand(x),tags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
+ let body=makeBody(w,x,u);
+ // Reserve room for meaningful hashtags; never cut a sentence mid-way.
+ const reserved=tags.slice(0,10).join(" ").length+2;
+ const maxBody=Math.max(210,500-reserved);
+ if(body.length>maxBody){
+  const lines=body.split("\n");
+  while(lines.length>5&&lines.join("\n").length>maxBody){
+   const removable=lines.findIndex((v,i)=>i>4&&v.startsWith("✅ "));
+   if(removable>=0)lines.splice(removable,1);
+   else {const i=lines.findIndex((v,j)=>j>4&&v.includes("使う場面を想像"));if(i>=0)lines.splice(i,1);else break;}
+  }
+  body=lines.join("\n");
+ }
+ return w.fit500(body+"\n\n",tags.join(" "));
+};
  w.thumbnailIdeas=x=>{const u=understand(x);return [u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)};
  w.recommendText=x=>{const u=understand(x);const fs=u.features.map(v=>v.label).join(" / ")||"特徴は商品ページで確認";return "🧠 商品判定："+u.type+"｜理解度 "+u.confidence+"%（"+u.source+"）\n🎯 用途："+u.use+"\n📍 使う場所："+u.place+"\n💡 特徴："+fs+"\n👤 向いていそう："+u.audience+"\n🚫 混ぜない文脈："+u.ng.join(" / ")};
  w.render=function(){oldRender();setTimeout(()=>{[...d.querySelectorAll("article.card")].forEach((card,i)=>{let x=null;try{x=w.eval("candidates["+i+"]")}catch(e){}if(!x&&w.__roomCandidates)x=w.__roomCandidates[i];if(!x)return;const u=understand(x),chips=card.querySelector(".chips");if(chips&&!chips.querySelector(".v43understand")){const a=d.createElement("span");a.className="chip v43understand";a.textContent="🧠 "+u.type+" "+u.confidence+"%";a.style.cssText="background:#eaf2ff;color:#174ea6;font-weight:900";chips.prepend(a)}})},0)};
