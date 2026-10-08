@@ -122,6 +122,8 @@ function makeBody(w,x,u){
  return lines.join("\n");
 }
 function install(w,d){
+ if(w.__v43Installed)return;
+ w.__v43Installed=true;
  const oldRender=w.render;
  w.productUnderstanding=understand;
  w.itemProfile=x=>{const u=understand(x);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
@@ -134,6 +136,19 @@ function install(w,d){
  const first=d.querySelector("section.panel");
  if(first&&!d.getElementById("v43note")){const n=d.createElement("div");n.id="v43note";n.className="warning";n.style.cssText="background:#eef5ff;border-color:#b9d2ff";n.innerHTML="<b>🧠 V43 商品理解エンジン：</b> 商品名を最優先に、キャッチコピー→商品説明の順で判定。商品種類・用途・使う場所・特徴・ターゲットを整理してから紹介文を作ります。";first.parentNode.insertBefore(n,first)}
 }
+// Wait for both nested frames and the V41 functions; do not depend on load event timing.
 const frame=document.getElementById("appframe");
-if(frame)frame.addEventListener("load",()=>{const nested=frame.contentDocument?.getElementById("appframe");if(!nested)return;const apply=()=>{try{const w=nested.contentWindow,d=nested.contentDocument;if(w&&d&&typeof w.makeCopy==="function")install(w,d)}catch(e){console.error("V43 install failed",e)}};nested.addEventListener("load",()=>setTimeout(apply,500));setTimeout(apply,700)});
+let attempts=0;
+const waitForApp=setInterval(()=>{
+ attempts++;
+ try{
+  const nested=frame?.contentDocument?.getElementById("appframe");
+  const w=nested?.contentWindow,d=nested?.contentDocument;
+  if(w&&d&&typeof w.makeCopy==="function"&&typeof w.render==="function"){
+   install(w,d);
+   clearInterval(waitForApp);
+  }
+ }catch(e){console.warn("V43 waiting for application",e)}
+ if(attempts>=100)clearInterval(waitForApp);
+},250);
 })();
