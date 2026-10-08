@@ -57,70 +57,98 @@ function hashtagsFromBase(base){
  return [...new Set(m)].slice(0,14).join(" ");
 }
 function productName(x){return clean(x.itemName).slice(0,82)}
-function reviewSummary(a){
- if(!a.hasText)return "";
- const names=a.themes.map(v=>v.key);
- if(!names.length)return "貼り付けたレビューも確認しながら、実際の使用感をチェックしたいところ。";
- if(names.length===1)return "貼り付けたレビューでは「"+names[0]+"」についての声が見られます。";
- return "貼り付けたレビューでは「"+names.slice(0,3).join("・")+"」についての声が目立ちます。";
+function naturalReviewLine(a,kind){
+ if(!a.hasText||!a.themes.length)return "";
+ const names=a.themes.map(v=>v.key).slice(0,3);
+ if(kind==="beauty"){
+  if(names.length===1)return names[0]+"も選ぶときに気になるポイントです。";
+  return names.join("・")+"など、使い続けやすさにつながるポイントも気になります。";
+ }
+ if(kind==="fashion"){
+  return names.join("・")+"あたりも、選ぶときに見ておきたいポイントです。";
+ }
+ if(kind==="food"){
+  return names.join("・")+"など、実際に続けやすいか気になるところです。";
+ }
+ return names.join("・")+"あたりも、選ぶときにチェックしておきたいポイントです。";
 }
-function cautiousNegative(a){
+function naturalCaution(a,kind){
  if(!a.hasText||a.negative===0)return "";
- return "一方で気になる声もあるので、自分に合うかレビュー本文まで確認して選びたいですね。";
+ if(kind==="beauty")return "肌質や好みには個人差があるので、成分や使い方も合わせて確認しておきたいですね。";
+ if(kind==="fashion")return "サイズ感や着心地には個人差があるので、サイズ表や素材も確認して選びたいですね。";
+ if(kind==="food")return "味や食べやすさには好みがあるので、内容量や原材料も確認して選びたいですね。";
+ return "使い心地には個人差もあるので、仕様や使い方も確認して選びたいですね。";
 }
 function compose(w,d,x,a){
  const u=typeof w.productUnderstanding==="function"?w.productUnderstanding(x):null;
  const base=w.makeCopy(x);
  const tags=hashtagsFromBase(base);
  const lines=[];
+ const rawName=String(x.itemName||"");
+ const name=productName(x);
  const sale=typeof w.saleEndLabel==="function"?(w.saleEndLabel(x)||""):"";
  const rc=Number(x.reviewCount||0),ra=Number(x.reviewAverage||0),price=Number(x.itemPrice||0);
+
+ const isBeauty=(u?.category||"").includes("美容")||/クレンジング|クレンズ|美容液|化粧水|乳液|クリーム|シャンプー|トリートメント|コスメ|スキンケア|洗顔/.test(rawName);
+ const isFashion=/ファッション|子供服/.test(u?.category||"")||/ジャケット|ブルゾン|アウター|シャツ|トップス|ニット|セーター|パンツ|スカート|ワンピース/.test(rawName);
+ const isFood=/食品|栄養/.test(u?.category||"")||/食品|惣菜|レトルト|冷凍|プロテイン|スープ|カレー|ごはん/.test(rawName);
+ const kind=isBeauty?"beauty":isFashion?"fashion":isFood?"food":"other";
+
  if(sale)lines.push("🔥 "+sale);
  if(rc>0&&ra>0&&ra<=5)lines.push("⭐ レビュー"+rc.toLocaleString()+"件・評価"+ra.toFixed(2));
  if(price>0)lines.push("💰 価格："+w.yen(price));
- lines.push("",productName(x),"");
+ lines.push("",name,"");
 
- let intro="";
- if(u?.category?.includes("美容")||/クレンジング|美容液|化粧水|シャンプー|トリートメント|コスメ/.test(x.itemName||"")){
-  intro="毎日使う美容アイテムだからこそ、商品説明だけじゃなく実際の使い心地も気になりますよね✨";
- }else if(/ファッション|子供服/.test(u?.category||"")){
-  intro="服は写真だけじゃ分かりにくいから、サイズ感や着心地の口コミまで見て選びたいですよね。";
- }else if(/食品|栄養/.test(u?.category||"")){
-  intro="味や使いやすさは商品説明だけでは分かりにくいから、口コミも参考にしたいところです🍴";
- }else{
-  intro="気になる商品ほど、商品説明だけじゃなく実際に使った人の感想まで見て選びたいですよね。";
- }
- lines.push(intro);
-
- if(u&&u.type!=="商品"){
-  lines.push(u.use+"。"+u.benefit+"のがポイントです。");
-  if(u.features?.length)lines.push("✅ "+u.features.slice(0,3).map(v=>v.label).join(" / "));
- }
- if(a.hasText){
-  lines.push("",reviewSummary(a));
-  if(a.themes.length){
-   const top=a.themes.slice(0,3).map(v=>"「"+v.key+"」").join("、");
-   lines.push("特に"+top+"は、購入前にチェックしておきたいポイント。");
+ if(kind==="beauty"){
+  if(/クレンジング|クレンズ/.test(rawName)){
+   lines.push("毎日のメイク落とし、落ちやすさだけじゃなく使い心地も大事ですよね✨");
+   lines.push("大容量タイプのクレンジングオイルだから、毎日使う人には容量もしっかりチェックしたいところ。");
+  }else{
+   lines.push("毎日使う美容アイテムだからこそ、使い心地や続けやすさまで気になりますよね✨");
+   if(u&&u.type!=="商品")lines.push(u.use+"。"+u.benefit+"のがポイントです。");
   }
-  const neg=cautiousNegative(a); if(neg)lines.push(neg);
- }else if(rc>=1000&&ra>=4.5){
-  lines.push("","レビューが"+rc.toLocaleString()+"件、評価"+ra.toFixed(2)+"と口コミ量がかなり多いので、実際の使用感を比較しやすい商品です◎");
+ }else if(kind==="fashion"){
+  lines.push("服は写真だけでは分かりにくいから、サイズ感や素材感まで見て選びたいですよね。");
+  if(u&&u.type!=="商品")lines.push(u.use+"。"+u.benefit+"のがポイントです。");
+ }else if(kind==="food"){
+  lines.push("毎日の中で取り入れるものだから、味や使いやすさまで気になりますよね🍴");
+  if(u&&u.type!=="商品")lines.push(u.use+"。"+u.benefit+"のがポイントです。");
+ }else{
+  lines.push("こういうの、実際の使いやすさまで分かると選びやすいですよね。");
+  if(u&&u.type!=="商品")lines.push(u.use+"。"+u.benefit+"のがポイントです。");
+ }
+
+ if(u?.features?.length)lines.push("✅ "+u.features.slice(0,3).map(v=>v.label).join(" / "));
+
+ const reviewLine=naturalReviewLine(a,kind);
+ if(reviewLine)lines.push("",reviewLine);
+
+ if(rc>=1000&&ra>=4.5){
+  lines.push("レビュー数が多く評価も高めなので、気になる人は実際の口コミも見比べておきたいですね◎");
  }else if(rc>=100&&ra>=4.3){
-  lines.push("","レビュー"+rc.toLocaleString()+"件・評価"+ra.toFixed(2)+"。評判も参考にしながら選びたいですね◎");
+  lines.push("口コミもあるので、使用感を見ながら選びたいですね◎");
  }
 
- if(/ファッション|子供服/.test(u?.category||"")){
-  lines.push("サイズ感・着丈・素材・洗濯表示なども合わせて確認しておくと選びやすそうです。");
- }else if(u?.category?.includes("美容")){
-  lines.push("肌質や使い方には個人差があるので、成分・使用方法も確認して選びたいですね。");
- }else if(/食品|栄養/.test(u?.category||"")){
-  lines.push("内容量・保存方法・調理方法も確認して、自分の生活に取り入れやすいか見ておきたいですね。");
+ const caution=naturalCaution(a,kind);
+ if(caution)lines.push(caution);
+
+ if(kind==="beauty"){
+  if(/クレンジング|クレンズ/.test(rawName)){
+   lines.push("気になったら、容量・香り・成分・使い方を商品ページで確認してみてください♪");
+  }else{
+   lines.push("気になったら、成分・容量・使い方を商品ページで確認してみてください♪");
+  }
+ }else if(kind==="fashion"){
+  lines.push("気になったら、サイズ・着丈・素材・洗濯表示を商品ページで確認してみてください♪");
+ }else if(kind==="food"){
+  lines.push("気になったら、内容量・原材料・保存方法を商品ページで確認してみてください♪");
  }else if(u?.cta){
-  lines.push(u.cta+"も商品ページで確認してみてください＾＾");
+  lines.push("気になったら、"+u.cta+"を商品ページで確認してみてください♪");
+ }else{
+  lines.push("気になったら、詳しい仕様を商品ページで確認してみてください♪");
  }
- if(targetText(d))lines.push("","🎯 "+targetText(d)+"向けで選定中");
- let body=lines.join("\n").replace(/\n{3,}/g,"\n\n").trim();
 
+ let body=lines.join("\n").replace(/\n{3,}/g,"\n\n").trim();
  let chosen=tags?tags.split(/\s+/):["#楽天ROOM","#楽天市場"];
  while(chosen.length>2&&body.length+2+chosen.join(" ").length>500)chosen.pop();
  if(body.length+2+chosen.join(" ").length>500)body=body.slice(0,500-2-chosen.join(" ").length-1)+"…";
@@ -130,7 +158,7 @@ function resultBox(d,host,a){
  let box=host.querySelector(".v46-analysis");
  if(!box){box=d.createElement("div");box.className="v46-analysis";box.style.cssText="margin-top:8px;padding:10px;border-radius:10px;background:#f5f0ff;color:#4e2a7d;font-size:12px;line-height:1.6";host.appendChild(box)}
  const t=a.themes.length?a.themes.map(v=>v.key+"("+v.count+")").join(" / "):"特徴語は少なめ";
- box.innerHTML="<b>🧠 レビュー分析</b><br>貼付レビュー："+(a.count||"1")+"件相当<br>注目："+esc(t)+(a.negative?("<br>気になる表現も "+a.negative+"件検出"):"");
+ box.innerHTML="<b>🧠 内部分析（投稿文には入りません）</b><br>レビュー："+(a.count||"1")+"件相当<br>注目テーマ："+esc(t)+(a.negative?("<br>気になる表現も "+a.negative+"件検出"):"");
 }
 async function slowGenerate(w,d,card,i,btn){
  const x=getItem(w,i); if(!x)return;
