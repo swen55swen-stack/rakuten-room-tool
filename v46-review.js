@@ -178,6 +178,106 @@ async function slowGenerate(w,d,card,i,btn){
 }
 function inject(w,d){
  const oldRender=w.render;
+
+ // V46: selected genre is authoritative for ROOM discovery.
+ const originalRoomResearch=typeof w.roomResearch==="function"?w.roomResearch:null;
+ const ROOM_TARGET_WORDS={
+  none:[],
+  male_interior:["一人暮らし","モダン","収納","インテリア"],
+  female_interior:["一人暮らし","北欧","収納","インテリア"],
+  easy_food:["時短","簡単","レンジ"],
+  kids:["知育","キッズ","子供"],
+  home_appliance:["時短","家電","便利"],
+  seasonal:["季節","人気"],
+  beauty:["スキンケア","ヘアケア","コスメ"]
+ };
+ async function genreAwareRoomResearch(){
+  const genre=d.getElementById("genreId")?.value||"";
+  if(!genre||!originalRoomResearch)return originalRoomResearch?.();
+
+  const app=d.getElementById("appId")?.value.trim()||"";
+  const key=d.getElementById("accessKey")?.value.trim()||"";
+  if(!app||!key){w.status("Application IDとAccess Keyを入力してください。");return}
+  const affiliate=d.getElementById("affiliateId")?.value.trim()||"";
+  const pages=Math.min(Number(d.getElementById("pages")?.value||2),3);
+  const min=Number(d.getElementById("minPrice")?.value||0);
+  const max=Number(d.getElementById("maxPrice")?.value||99999999);
+  const saleOnly=d.getElementById("saleOnly")?.value==="1";
+  const target=d.getElementById("roomTarget")?.value||"none";
+  const genreText=d.getElementById("genreId")?.options[d.getElementById("genreId").selectedIndex]?.textContent||"選択ジャンル";
+
+  try{
+   w.status("💗 "+genreText+"の中だけで、ROOMで売れそうな商品を探しています…");
+   const results=d.getElementById("results");
+   if(results)results.innerHTML='<div class="empty">'+esc(genreText)+'の商品だけを取得中…</div>';
+
+   let all=[];
+   const rt=await w.rankingSearchPeriod(app,key,affiliate,Math.min(pages,2),genre,"realtime","ROOMジャンル内リアルタイム");
+   rt.forEach((x,i)=>{x._realtimeRank=Number(x.rank||i+1);all.push(x)});
+   const dy=await w.rankingSearchPeriod(app,key,affiliate,Math.min(pages,2),genre,"","ROOMジャンル内デイリー");
+   dy.forEach((x,i)=>{x._dailyRank=Number(x.rank||i+1);all.push(x)});
+
+   const words=ROOM_TARGET_WORDS[target]||[];
+   for(const q of words.slice(0,2)){
+    try{all.push(...await w.themeSearch(app,key,affiliate,q,1,min,max,genre))}catch(e){}
+   }
+
+   const map=new Map();
+   all.forEach((x,i)=>{
+    if(!x?.itemCode)return;
+    const old=map.get(x.itemCode);
+    if(old){
+     if(x._realtimeRank)old._realtimeRank=x._realtimeRank;
+     if(x._dailyRank)old._dailyRank=x._dailyRank;
+    }else{
+     if(!x.rank)x.rank=i+1;
+     map.set(x.itemCode,x);
+    }
+   });
+
+   let arr=[...map.values()].filter(x=>{
+    const p=Number(x.itemPrice||0);
+    return p>=min&&p<=max&&w.directUrl(x)&&Number(x.availability??1)===1&&!w.isExcludedProduct(x)&&(!saleOnly||w.isOnSale(x));
+   });
+
+   const hist=w.updateMonthlyHistory(arr);
+   arr.forEach(x=>{
+    const base=w.finalScore(x,"mix",hist);
+    const reviews=Number(x.reviewCount||0),avg=Number(x.reviewAverage||0),price=Number(x.itemPrice||0);
+    let bonus=0;
+    if(Number(x._realtimeRank||999)<=30)bonus+=30; else if(Number(x._realtimeRank||999)<=100)bonus+=15;
+    if(Number(x._dailyRank||999)<=30)bonus+=20; else if(Number(x._dailyRank||999)<=100)bonus+=10;
+    if(reviews>=1000)bonus+=16; else if(reviews>=100)bonus+=12; else if(reviews>=20)bonus+=7;
+    if(avg>=4.6)bonus+=16; else if(avg>=4.4)bonus+=12; else if(avg>=4.1)bonus+=6;
+    if(price>=800&&price<=8000)bonus+=12; else if(price<=20000)bonus+=6;
+    if(w.isOnSale(x))bonus+=14;
+    if(Number(x.pointRate||1)>=3)bonus+=6;
+    x._room=Math.round(base*.55+bonus);
+    x._score=x._room;
+   });
+   arr.sort((a,b)=>b._room-a._room||Number(a.rank||999)-Number(b.rank||999));
+   const top=arr.slice(0,10);
+   if(!top.length)throw new Error("このジャンルで条件に合う商品が見つかりませんでした。価格やセール条件を変えてください。");
+
+   w.__roomCandidates=top;
+   w.eval("candidates = window.__roomCandidates; render();");
+   setTimeout(()=>{
+    [...d.querySelectorAll("article.card")].forEach((card,i)=>{
+     const chips=card.querySelector(".chips"),x=top[i];
+     if(!chips||!x||chips.querySelector(".v46genrechip"))return;
+     const a=d.createElement("span");a.className="chip v46genrechip";a.textContent="📂 "+genreText;
+     a.style.cssText="background:#e9f7ef;color:#176b3a;font-weight:900";chips.prepend(a);
+    });
+   },50);
+   w.status("完了：📂 "+genreText+"の中だけから、ROOMで売れそうな候補を"+top.length+"件作りました。");
+  }catch(e){
+   console.error(e);
+   w.status("取得できませんでした。\n\n"+(e.message||e));
+   const results=d.getElementById("results");
+   if(results)results.innerHTML='<div class="empty">取得に失敗しました。</div>';
+  }
+ }
+ if(originalRoomResearch)w.roomResearch=genreAwareRoomResearch;
  function decorate(){
   [...d.querySelectorAll("article.card")].forEach((card,i)=>{
    if(card.querySelector(".v46-review-wrap"))return;
