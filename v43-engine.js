@@ -1,5 +1,7 @@
 (()=>{
 const RULES=[
+["サラダチキンメーカー",/サラダチキンメーカー|サラダチキン.*(?:調理器|メーカー)/,"キッチン家電","サラダチキンなどの調理に使うキッチン家電","キッチン・食卓","自宅で手軽にサラダチキンを作りたい","食事づくりを工夫したい人","調理の手間や使いやすさを考えながら選べる",["#サラダチキンメーカー","#キッチン家電","#自炊","#サラダチキン","#料理グッズ","#時短調理"],["掃除機","寝具"],"容量・調理モード・加熱時間・お手入れ方法"],
+["ミキサー・ブレンダー",/ブレンダー|ミキサー|スムージーメーカー|ジューサー/,"キッチン家電","食材や飲み物を混ぜるための調理家電","キッチン","飲み物や料理の下ごしらえを手軽にしたい","スムージーや自炊を楽しみたい人","食材の混ぜ方や使いやすさを選べる",["#ミキサー","#ブレンダー","#キッチン家電","#スムージー","#調理家電"],["掃除機","寝具"],"容量・刃の仕様・洗いやすさ・対応食材"],
 ["布団乾燥機",/布団乾燥機|ふとん乾燥機|ふとん乾燥器|布団乾燥器/,"寝具家電","布団に温風を送り乾燥やあたために使う家電","寝室・布団・靴（対応機種のみ）","布団の湿気や寝る前の冷たさが気になる","布団の乾燥やあたためを手軽にしたい人","布団の乾燥やあたために使える",["#布団乾燥機","#ふとん乾燥機","#布団乾燥","#寝具家電","#湿気対策","#梅雨対策","#冬支度","#布団あたため"],["掃除機","コードレス掃除機","吸引力","ゴミ捨て"],"対応する布団サイズ・ノズル数・運転モード・消費電力"],
 ["排気口カバー",/排気口(?:カバー|ガード)|グリルガード|コンロ(?:カバー|ガード)/,"キッチン用品","コンロの排気口周りを汚れから守るキッチン用品","キッチン・コンロ周り","調理中の油はねや汚れが気になる","コンロ周りを清潔に保ちたい人","油はねなどの汚れ対策に役立つ",["#排気口カバー","#コンロカバー","#キッチングッズ","#油はねガード","#汚れ防止","#コンロ掃除","#キッチン掃除","#家事ラク","#お手入れ簡単"],["収納ラック","整理収納","部屋づくり","寝具"],"対応コンロ・幅・奥行き・耐熱温度・お手入れ方法"],
 ["枕",/枕|まくら|ピロー/,"寝具","頭と首を支えて眠るための寝具","寝室","今の枕がしっくりこない・寝心地を見直したい","睡眠環境を見直したい人","毎晩使う寝具だから、高さや硬さを自分に合わせて選びたい",["#枕","#まくら","#快眠","#睡眠環境","#枕選び"],["収納","掛け布団","冬支度"],"高さ・硬さ・素材・サイズ・お手入れ方法"],
@@ -62,7 +64,7 @@ function choose(x,a){const k=String(x.itemCode||x.itemName||"");const n=[...k].r
 function understand(x){
  const n=low(x.itemName),c=low(x.catchcopy),d=low(x.itemCaption);
  // Title is authoritative. Generic accessory terms must not override a specific product.
- const priorities={"布団乾燥機":130,"排気口カバー":120,"珪藻土コースター":110,"モバイルバッテリー":108,"ホエイプロテイン":106,"ソイプロテイン":106,"知育玩具":104,"ハンガー":50,"収納ラック":35,"充電器":35,"おもちゃ":30};
+ const priorities={"サラダチキンメーカー":145,"ミキサー・ブレンダー":125,"布団乾燥機":130,"排気口カバー":120,"珪藻土コースター":110,"モバイルバッテリー":108,"ホエイプロテイン":106,"ソイプロテイン":106,"知育玩具":104,"ハンガー":50,"収納ラック":35,"充電器":35,"おもちゃ":30};
  const generic=new Set(["収納ラック","充電器","おもちゃ"]);
  function rank(text,source){
   const matches=[];
@@ -141,7 +143,10 @@ function makeBody(w,x,u){
   lines.push("","「"+u.pain+"」という人にも、チェックしてほしいアイテム😊");
   lines.push(u.place+"で使う場面を想像しながら、使いやすさや置き場所を考えて選びたいですね。");
  }else{
-  lines.push("気になるアイテムですが、用途や特徴は商品ページで確認してから選びたいですね。");
+  lines.push("気になる商品を見つけたら、まずは自分の暮らしでどんなふうに使えるか考えてみたいですね😊");
+  lines.push("商品名だけでは詳しい機能まで判断できないので、購入前に仕様や使い方を確認しておくと選びやすそうです。");
+  lines.push("毎日使うものなら、お手入れのしやすさや収納場所も気になるポイント。使う頻度や置き場所もイメージしておきたいところです。");
+  lines.push("レビューがある場合は、実際に購入した人の感想も参考にしながら比較してみるのがおすすめ◎");
  }
  lines.push("","気になったら、"+u.cta+"を商品ページで確認してみてください♪");
  return lines.join("\n");
@@ -153,22 +158,33 @@ function install(w,d){
  w.productUnderstanding=understand;
  w.itemProfile=x=>{const u=understand(x);return {cat:u.type,pain:u.pain,benefit:u.benefit,tags:u.tags.join(" "),thumbs:[u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)}};
  w.makeCopy=x=>{
- const u=understand(x),tags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
- let body=makeBody(w,x,u);
- // Reserve room for meaningful hashtags; never cut a sentence mid-way.
- const reserved=tags.slice(0,10).join(" ").length+2;
- const maxBody=Math.max(210,500-reserved);
- if(body.length>maxBody){
-  const lines=body.split("\n");
-  while(lines.length>5&&lines.join("\n").length>maxBody){
-   const removable=lines.findIndex((v,i)=>i>4&&v.startsWith("✅ "));
-   if(removable>=0)lines.splice(removable,1);
-   else {const i=lines.findIndex((v,j)=>j>4&&v.includes("使う場面を想像"));if(i>=0)lines.splice(i,1);else break;}
+  const u=understand(x),allTags=makeTags(w,x,u).split(/\s+/).filter(Boolean);
+  const body=makeBody(w,x,u);
+  const essential=allTags.slice(0,Math.min(8,allTags.length));
+  const budget=500-(" "+essential.join(" ")).length;
+  let lines=body.split("\n");
+  // Prefer removing optional sentences to chopping mid-sentence.
+  while(lines.join("\n").length>budget&&lines.length>9){
+   const idx=lines.findIndex((v,i)=>i>6&&(/使う頻度|実際に購入した人|使う場面を想像|毎日使うものなら/.test(v)||v.startsWith("✅ ")));
+   if(idx<0)break;
+   lines.splice(idx,1);
   }
-  body=lines.join("\n");
- }
- return w.fit500(body+"\n\n",tags.join(" "));
-};
+  let result=lines.join("\n").trim();
+  if(result.length>budget){
+   const sentences=result.split(/(?<=[。！？♪◎])|\n/).map(v=>v.trim()).filter(Boolean);
+   result="";
+   for(const part of sentences){
+    const next=result?(result+"\n"+part):part;
+    if(next.length>budget)break;
+    result=next;
+   }
+  }
+  if(!result)result=body.slice(0,Math.max(0,budget-1))+"…";
+  const remaining=500-result.length-1;
+  const tags=[];
+  for(const t of allTags){if(tags.join(" ").length+t.length+(tags.length?1:0)<=remaining)tags.push(t);}
+  return result+(tags.length?"\n"+tags.join(" "):"");
+ };
  w.thumbnailIdeas=x=>{const u=understand(x);return [u.type+"をチェック",u.features[0]?.label||u.category,u.audience].filter(Boolean).slice(0,3)};
  w.recommendText=x=>{const u=understand(x);const fs=u.features.map(v=>v.label).join(" / ")||"特徴は商品ページで確認";return "🧠 商品判定："+u.type+"｜理解度 "+u.confidence+"%（"+u.source+"）\n🎯 用途："+u.use+"\n📍 使う場所："+u.place+"\n💡 特徴："+fs+"\n👤 向いていそう："+u.audience+"\n🚫 混ぜない文脈："+u.ng.join(" / ")};
  w.render=function(){
