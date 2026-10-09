@@ -1229,8 +1229,7 @@ async function copyThumb(rank,text){
   document.getElementById('cardstatus-'+rank).textContent=ok?'✅ サムネ文「'+text+'」をコピーしました。':'サムネ文をコピーできませんでした。';
 }
 async function copyText(rank){const source=document.getElementById('copy-'+rank);if(!source)return false;const value=source.value;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);return true}}catch(e){}const sx=window.scrollX,sy=window.scrollY;const active=document.activeElement;try{const temp=document.createElement('textarea');temp.value=value;temp.setAttribute('readonly','');temp.style.position='fixed';temp.style.left='-9999px';temp.style.top='0';temp.style.opacity='0';document.body.appendChild(temp);try{temp.focus({preventScroll:true})}catch(e){temp.focus()}temp.select();temp.setSelectionRange(0,temp.value.length);const ok=document.execCommand('copy');temp.remove();try{active?.focus?.({preventScroll:true})}catch(e){}window.scrollTo(sx,sy);return ok}catch(e){window.scrollTo(sx,sy);return false}}
-async function prepare(rank,url){const st=document.getElementById('cardstatus-'+rank);if(!url){if(st)st.textContent='商品URLが見つかりませんでした。';return}const tab=window.open('about:blank','_blank');if(!tab){if(st)st.textContent='⚠️ Edgeに新しいタブをブロックされました。アドレスバー右側のポップアップ許可をONにしてください。';return}try{tab.document.write('<!doctype html><meta charset="utf-8"><title>楽天商品ページを開いています</title><body style="font-family:sans-serif;padding:30px">楽天の商品ページを開いています…<script src="./v55-timesale.js?v=55lite1"></script>
-</body>')}catch(e){}const ok=await copyText(rank);if(st)st.textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。コピーできなかった場合は「文章コピー」を押してください。';try{tab.location.replace(url)}catch(e){tab.location.href=url}}
+async function prepare(rank,url){const st=document.getElementById('cardstatus-'+rank);if(!url){if(st)st.textContent='商品URLが見つかりませんでした。';return}const tab=window.open('about:blank','_blank');if(!tab){if(st)st.textContent='⚠️ Edgeに新しいタブをブロックされました。アドレスバー右側のポップアップ許可をONにしてください。';return}try{tab.document.write('<!doctype html><meta charset="utf-8"><title>楽天商品ページを開いています</title><body style="font-family:sans-serif;padding:30px">楽天の商品ページを開いています…</body>')}catch(e){}const ok=await copyText(rank);if(st)st.textContent=ok?'✅ 投稿文をコピーしました。商品ページを開きます。':'商品ページを開きます。コピーできなかった場合は「文章コピー」を押してください。';try{tab.location.replace(url)}catch(e){tab.location.href=url}}
 async function copyOnly(rank){const sy=window.scrollY;const ok=await copyText(rank);window.scrollTo(0,sy);document.getElementById('cardstatus-'+rank).textContent=ok?'✅ コピーしました。画面位置はそのままです。':'コピーできませんでした。文章欄を手動で選択してCtrl+Cしてください。'}
 function doneList(){try{return JSON.parse(localStorage.getItem(DONE)||'[]')}catch(e){return[]}}
 function toggleDone(rank){let d=doneList();d=d.includes(rank)?d.filter(x=>x!==rank):[...d,rank];localStorage.setItem(DONE,JSON.stringify(d));updateProgress()}
@@ -1238,5 +1237,6 @@ function updateProgress(){const d=doneList();for(let i=1;i<=10;i++){const c=docu
 function goNext(rank){const d=doneList();let n=null;for(let i=rank+1;i<=10;i++)if(!d.includes(i)){n=i;break}if(!n)for(let i=1;i<=10;i++)if(!d.includes(i)){n=i;break}if(n)document.getElementById('card-'+n)?.scrollIntoView({behavior:'smooth',block:'center'});else alert('10件すべて投稿済みです！')}
 loadSettings();
 </script>
+<script src="./v55-timesale.js?v=55lite2"></script>
 </body>
 </html>
