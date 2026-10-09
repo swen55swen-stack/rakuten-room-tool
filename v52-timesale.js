@@ -132,8 +132,9 @@ function install(w,d,payload){
       const ta=card.querySelector("textarea[id^='copy-']");
       if(ta){
        ta.value=timesaleCopy(w,x).slice(0,500);
-       const counter=ta.nextElementSibling;
-       if(counter&&counter.textContent.includes('文字数'))counter.textContent='文字数：'+ta.value.length+' / 500（V52実掲載商品）';
+       const scope=ta.closest('article.card')||ta.parentElement;
+       const counter=[...(scope?.querySelectorAll('*')||[])].find(el=>/^文字数[:：]/.test((el.textContent||'').trim()));
+       if(counter)counter.textContent='文字数：'+ta.value.length+' / 500（V52実掲載商品）';
       }
      });
     },150);
