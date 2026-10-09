@@ -16,7 +16,7 @@ function getCodes(){
  try{return decodeURIComponent(m[1]).split(',').map(v=>v.trim()).filter(Boolean).slice(0,30)}catch(e){return []}
 }
 function bookmarklet(){
- return "javascript:(()=>{const u=[...document.querySelectorAll('a[href*=\\\"item.rakuten.co.jp/\\\"]')].map(a=>a.href);const c=[];for(const h of u){try{const x=new URL(h);const p=x.pathname.split('/').filter(Boolean);if(x.hostname==='item.rakuten.co.jp'&&p.length>=2){const v=p[0]+':'+p[1];if(!c.includes(v))c.push(v)}}catch(e){}}if(!c.length){alert('タイムセール商品が見つかりませんでした。商品が表示されている位置まで少しスクロールして、もう一度押してください。');return}location.href='"+TARGET_URL+"#ts='+encodeURIComponent(c.slice(0,30).join(','));})()";
+ return "javascript:(()=>{const A=[...document.querySelectorAll('a[href]')];const out=[];for(const a of A){let u;try{u=new URL(a.href,location.href)}catch(e){continue}if(u.hostname!=='item.rakuten.co.jp')continue;const p=u.pathname.split('/').filter(Boolean);if(p.length<2)continue;const href=(a.getAttribute('href')||'')+' '+u.href;let near='';let el=a;for(let i=0;i<5&&el;i++,el=el.parentElement){near+=' '+(el.innerText||'');try{near+=' '+[...el.querySelectorAll('img')].map(x=>(x.alt||'')+' '+(x.title||'')).join(' ')}catch(e){}}const isTs=/timesale/i.test(href)||/24時間限定プライス|24時間タイムセール|タイムセール/i.test(near);if(!isTs)continue;const code=p[0]+':'+p[1];if(!out.some(x=>x.code===code))out.push({code,url:u.href})}if(!out.length){alert('タイムセール対象の商品リンクだけを見つけられませんでした。ページの「超目玉アイテム」「目玉アイテム」付近までスクロールして、もう一度押してください。');return}location.href='https://swen55swen-stack.github.io/rakuten-room-tool/v47.html#ts='+encodeURIComponent(out.slice(0,30).map(x=>x.code).join(','));})()";
 }
 async function fetchItem(w,app,key,affiliate,itemCode){
  const q=new URLSearchParams({applicationId:app,accessKey:key,format:'json',formatVersion:'1',itemCode});
@@ -63,7 +63,6 @@ async function importTimesale(w,d,codes){
    await sleep(350);
   }
   if(!all.length)throw new Error('商品情報を取得できませんでした。タイムセールページを再読み込みして、取込ボタンをもう一度押してください。');
-  all.sort((a,b)=>b._room-a._room);
   const top=all.slice(0,10);
   w.__roomCandidates=top;
   w.eval('candidates = window.__roomCandidates; render();');
@@ -72,7 +71,7 @@ async function importTimesale(w,d,codes){
     const x=top[i]; if(!x)return;
     const chips=card.querySelector('.chips');
     if(chips&&!chips.querySelector('.v47tschip')){
-     const a=d.createElement('span');a.className='chip v47tschip';a.textContent='🔥 24時間タイムセール';
+     const a=d.createElement('span');a.className='chip v47tschip';a.textContent='🔥 タイムセール実掲載';
      a.style.cssText='background:#fff0e6;color:#b54708;font-weight:900';
      chips.prepend(a);
     }
@@ -84,7 +83,7 @@ async function importTimesale(w,d,codes){
     }
    });
   },250);
-  w.status('完了：楽天24時間タイムセール掲載商品から、ROOM向け候補を'+top.length+'件作りました。');
+  w.status('完了：楽天24時間タイムセールページに掲載されていた順番のまま、商品を'+top.length+'件取り込みました。');
  }catch(e){
   console.error(e);w.status('タイムセール取込に失敗しました。\n\n'+(e.message||e));
  }finally{
@@ -105,7 +104,7 @@ function install(w,d,codes){
    '③ お気に入りの「🔥V47へ取込」を押す<br>'+
    '④ V47に戻ったら商品を自動取得します<br><br>'+
    '<a id="v47Bookmarklet" class="btnlink" href="'+bm+'" style="background:#f28c00;color:#fff">🔥V47へ取込</a>'+
-   '<span style="margin-left:8px;font-size:12px">商品リンクを最大30件読み込みます</span>';
+   '<span style="margin-left:8px;font-size:12px">タイムセール対象リンクだけを、ページ順のまま最大30件読み込みます</span>';
   first.parentNode.insertBefore(box,first);
  }
  if(codes.length){
