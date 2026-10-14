@@ -18,8 +18,8 @@ style.id=STYLE_ID;
 style.textContent=".v66-ai-panel{background:#f1f8ff;border:2px solid #367de7;border-radius:14px;padding:15px;margin:14px 0;color:#183457}.v66-ai-panel label{display:block;font-weight:700;font-size:13px;margin:8px 0 4px}.v66-ai-panel input{max-width:100%;box-sizing:border-box;width:100%;padding:9px;border:1px solid #abc5ea;border-radius:8px;background:#fff;color:#222}.v66-ai-panel .v66-ai-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.v66-ai-panel button,.v66-ai-action{padding:9px 13px;border-radius:8px;border:0;background:#2563eb;color:#fff;font-weight:700;cursor:pointer}.v66-ai-panel button:disabled,.v66-ai-action:disabled{opacity:.55;cursor:wait}.v66-ai-note{font-size:12px;color:#34516f;line-height:1.6}.v66-ai-status{font-size:13px;margin-top:7px;white-space:pre-wrap;line-height:1.5}.v66-ai-preview{font-size:12px;margin:9px 0;padding:8px;border-left:3px solid #4d91db;background:#f2f7ff;color:#264361}.v66-ai-pending{font-size:12px;color:#8a5707;font-weight:700;margin:8px 0}.v66-ai-done{color:#166534;background:#effbf2;padding:7px 9px;border-radius:6px}.v66-ai-panel a{color:#205eb8}";
 document.head.appendChild(style);
 const panel=el("section","v66-ai-panel");
-panel.innerHTML='<b style="font-size:17px">✨ AI商品別紹介文（2段階チェック）</b>'+
- '<div class="v66-ai-note">①商品名と説明から「何の商品か・確認できる特徴」をAIが整理 → ②商品ごとに500文字以内のROOM文を生成。URL取込・タイムセール・ふるさと納税に対応。<br>※ 未照合商品は誤紹介を防ぐためAI生成を停止します。設定方法は <a href="./ai-setup.html" target="_blank" rel="noopener">こちら</a>。APIの設定前は「ChatGPT用依頼文をコピー」して <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a> に貼り付けられます。</div>'+
+panel.innerHTML='<b style="font-size:17px">✨ AI商品別紹介文（3段階チェック）</b>'+
+ '<div class="v66-ai-note">①商品名と説明から「何の商品か・確認できる特徴」をAIが整理 → ②商品別のROOM文作成 → ③元の商品情報と照らして校閲。URL取込・タイムセール・ふるさと納税に対応。<br>※ 未照合商品は誤紹介を防ぐためAI生成を停止します。設定方法は <a href="./ai-setup.html" target="_blank" rel="noopener">こちら</a>。APIの設定前は「ChatGPT用依頼文をコピー」して <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a> に貼り付けられます。</div>'+
  '<label for="v66WorkerUrl">自分のCloudflare Worker URL（秘密鍵そのものではありません）</label>'+
  '<input id="v66WorkerUrl" placeholder="https://xxxx.your-name.workers.dev" autocomplete="url" inputmode="url">'+
  '<label for="v66WorkerToken">Worker専用パスコード（このタブだけで保持・保存しません）</label>'+
@@ -105,10 +105,10 @@ async function aiOne(card,{quiet=false}={}){
  let conn;
  try{conn=credentials()}catch(e){if(status)status.textContent=e.message;return false}
  if(button)button.disabled=true;
- if(status)status.textContent="🔎 AIが商品を分類・事実確認 → 商品専用の文章を生成しています…";
+ if(status)status.textContent="🔎 商品の特定 → 商品専用文の作成 → 事実確認・校閲を行っています（しばらく時間がかかります）…";
  try{
   const ctrl=new AbortController();
-  const timeout=setTimeout(()=>ctrl.abort(),100000);
+  const timeout=setTimeout(()=>ctrl.abort(),180000);
   let res;
   try{
    res=await fetch(conn.url+"/generate",{
