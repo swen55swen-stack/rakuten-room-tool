@@ -46,7 +46,7 @@ function sanitizedProduct(src){
   try{hostname=new URL(url).hostname.toLowerCase()}catch(e){}
   if(!["item.rakuten.co.jp","brandavenue.rakuten.co.jp"].includes(hostname))throw new Error("楽天の商品URLのみ対応しています");
   const name=trim(src.itemName,240).trim();
-  if(!name||/^楽天(商品|タイムセール商品)/.test(name))throw new Error("商品名を照合できないためAI生成を停止しました");
+  if(!name||/^楽天\s*(?:商品|タイムセール商品)/.test(name))throw new Error("商品名を照合できないためAI生成を停止しました");
   const price=Number(src.itemPrice);
   return {
     name,
