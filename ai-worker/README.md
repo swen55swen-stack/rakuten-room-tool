@@ -24,7 +24,7 @@ npx wrangler secret put ROOM_ACCESS_TOKEN
 - OpenAI キーは Cloudflare Secret から読み込み、ブラウザへ返しません。
 - 入力は楽天の商品情報（タイトル・説明・価格・レビュー等）のみ。楽天の Application ID、Access Key は送信しません。
 - 商品 URL のホストは楽天市場・Rakuten Fashion に限定。サーバーは任意 URL にアクセスしません。
-- OpenAI Responses API の Structured Outputs を利用。**商品特定・根拠抽出 → ROOM文作成**の二段階です。
+- OpenAI Responses API の Structured Outputs を利用。**商品特定・根拠抽出 → ROOM文作成 → 独立校閲**の三段階です（1商品につき原則3回のAI呼び出し）。
 - 文章はハッシュタグ含め最大500文字に制限。推測・購入体験の捏造を禁止するプロンプトです。
 - OpenAI API は ChatGPT のサブスクリプションと別料金です。従量課金の上限を設定してください。
 - AI が絶対に間違わない保証はないため、必ず投稿前に原文・価格を確認してください。
