@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>楽天ROOM AI連携設定</title>
+<style>body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f6f8fc;color:#19283f;line-height:1.8;margin:0}main{max-width:760px;margin:24px auto;padding:24px;background:white;border-radius:14px;box-shadow:0 3px 20px #182a4412}h1{font-size:24px}h2{font-size:19px;margin-top:28px}code{background:#edf2fa;padding:2px 6px;border-radius:4px}li{margin:10px 0}a{color:#1d56bb}aside{background:#fff5e4;border-left:4px solid #e5991a;padding:10px 14px}</style>
+</head><body><main><h1>✨ 楽天ROOM AI文章生成 — 初回設定</h1>
+<p><a href="./v66.html">← V66のアプリに戻る</a></p>
+<p>V66の通常商品URL・タイムセール・ふるさと納税の取得機能はこれまでどおりです。AIで商品を分析して文章を作るには、別の安全なAPIサーバーを1回設定する必要があります。</p>
+<aside><strong>大事：</strong>ChatGPTの有料プランとOpenAI APIの利用料金は別です。秘密のAPIキーをGitHub、GitHub Pages、チャット、ブラウザの入力欄へ貼らないでください。</aside>
+<h2>1. CloudflareでWorkerを作成</h2>
+<p><a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">Cloudflareダッシュボード</a> → Workers & Pages → Workerを作成。編集画面で<a href="https://github.com/swen55swen-stack/rakuten-room-tool/blob/main/ai-worker/src/index.js" target="_blank" rel="noopener">このWorkerコード</a>をコピーして置き換え、デプロイします。</p>
+<h2>2. Cloudflareで秘密の変数を登録</h2>
+<p>Workerの Settings → Variables and Secrets → Add で、<b>Type: Secret</b> を選んで次の2つを登録します。</p>
+<ol><li><code>OPENAI_API_KEY</code> — <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OpenAIのAPI管理画面</a>で作ったキー</li>
+<li><code>ROOM_ACCESS_TOKEN</code> — 自分で決めた長いランダムなパスコード（32文字以上推奨）。APIキーと同じ文字列は使わないでください。</li></ol>
+<p>保存・反映後にCloudflareのWorker URL（例：<code>https://xxxx.your-name.workers.dev</code>）をコピーします。</p>
+<h2>3. V66と接続</h2>
+<ol><li><a href="./v66.html">V66</a>を開く。</li>
+<li>画面上部の「AI商品別紹介文」の Worker URL に Cloudflare のURLを入力。</li>
+<li>Worker専用パスコードに、先ほどの <code>ROOM_ACCESS_TOKEN</code> の値を入力（<b>OpenAI APIキーではありません</b>）。</li>
+<li>「接続確認」→商品URLを貼付→AI生成、または表示中の商品をまとめてAI生成。</li></ol>
+<p>Worker URLだけブラウザに保存します。パスコードはこのタブ内だけで保持し、閉じると消えます。AIに渡すのは楽天の商品名・商品説明・価格・レビュー等で、Rakuten APIキーは送信しません。</p>
+<aside><strong>注意：</strong>AIが「使った」といった実体験や裏づけのない値引き、健康効能などを勝手に書かないよう制限していますが、100%の正確性は保証できません。最終価格や使用上の注意は商品ページで確認してください。Workerは専用パスコードで認証します。URLのドメイン制限（CORS）だけに依存しません。</aside>
+</main></body></html>
