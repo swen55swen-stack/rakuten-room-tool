@@ -19,7 +19,7 @@ style.textContent=".v66-ai-panel{background:#f1f8ff;border:2px solid #367de7;bor
 document.head.appendChild(style);
 const panel=el("section","v66-ai-panel");
 panel.innerHTML='<b style="font-size:17px">✨ AI商品別紹介文（2段階チェック）</b>'+
- '<div class="v66-ai-note">①商品名と説明から「何の商品か・確認できる特徴」をAIが整理 → ②商品ごとに500文字以内のROOM文を生成。URL取込・タイムセール・ふるさと納税に対応。<br>※ 未照合商品は誤紹介を防ぐためAI生成を停止します。設定方法は <a href="./ai-setup.html" target="_blank" rel="noopener">こちら</a>。</div>'+
+ '<div class="v66-ai-note">①商品名と説明から「何の商品か・確認できる特徴」をAIが整理 → ②商品ごとに500文字以内のROOM文を生成。URL取込・タイムセール・ふるさと納税に対応。<br>※ 未照合商品は誤紹介を防ぐためAI生成を停止します。設定方法は <a href="./ai-setup.html" target="_blank" rel="noopener">こちら</a>。APIの設定前は「ChatGPT用依頼文をコピー」して <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a> に貼り付けられます。</div>'+
  '<label for="v66WorkerUrl">自分のCloudflare Worker URL（秘密鍵そのものではありません）</label>'+
  '<input id="v66WorkerUrl" placeholder="https://xxxx.your-name.workers.dev" autocomplete="url" inputmode="url">'+
  '<label for="v66WorkerToken">Worker専用パスコード（このタブだけで保持・保存しません）</label>'+
@@ -161,7 +161,7 @@ function decorate(){
    if(!p){if(st)st.textContent="商品情報を取得できませんでした。";return}
    const ok=await copyPlain(chatgptPrompt(p));
    if(st)st.textContent=ok?"✅ 商品情報と依頼文をコピーしました。ChatGPTを開いて貼り付けて送信してください。":"コピーできませんでした。";
-   if(ok)window.open("https://chatgpt.com/","_blank","noopener");
+   
   });
   const note=el("div","v66-ai-pending","⚠️ 現在の本文は従来のテンプレート仮文です。AI生成後に内容を確認して投稿してください。");
   ta.before(note);
