@@ -64,6 +64,30 @@ function payloadFrom(item){
 function modeFrom(item){
  return item._furusato?"furusato":item._normalUrl?"normal":"timesale";
 }
+function chatgptPrompt(item){
+ const p=payloadFrom(item);
+ const kind=item._furusato?"ふるさと納税の返礼品":item._normalUrl?"通常商品":"タイムセール掲載商品";
+ return [
+ "以下の楽天"+kind+"の商品について、楽天ROOMに投稿する紹介文を日本語で作成してください。",
+ "必ずまず商品名から『何の商品か』を正しく理解してください。説明文内の関係ない食品/収納などの単語には引っ張られないでください。",
+ "①実際に書かれている特徴だけ使う ②具体的な使い道と購入前の確認ポイント ③自然な興味を引く冒頭 ④内容に合うハッシュタグ ⑤合計500文字以内、目安350〜430文字。",
+ "価格は明記。体験談や不明な機能/効能/値引き率は創作しない。食品、服、トレーニング用品などを誤分類しない。",
+ "未照合なら事実を断定せず、誤った商品名から創作しない。回答は完成したROOM投稿文のみ。",
+ "【商品名】"+p.itemName,
+ "【価格】"+(p.itemPrice?p.itemPrice+"円":"未確認"),
+ "【レビュー】"+(p.reviewCount?p.reviewCount+"件・評価"+p.reviewAverage:"未確認"),
+ "【説明】"+p.itemCaption.slice(0,2700),
+ "【ショップの訴求】"+p.catchcopy,
+ "【商品URL】"+p.itemUrl
+ ].join("\n");
+}
+async function copyPlain(text){
+ try{await navigator.clipboard.writeText(text);return true}catch(e){}
+ const ta=document.createElement("textarea");
+ ta.value=text;ta.style.position="fixed";ta.style.left="-9999px";document.body.appendChild(ta);
+ ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();return ok;
+}
+
 async function aiOne(card,{quiet=false}={}){
  const textarea=card.querySelector("textarea");
  if(!textarea)return false;
@@ -127,6 +151,18 @@ function decorate(){
   btn.type="button";
   actions.appendChild(btn);
   btn.addEventListener("click",()=>{aiOne(card)});
+  const handoff=el("button","v66-ai-action","💬 ChatGPT用依頼文をコピー");
+  handoff.type="button";
+  handoff.style.background="#25614c";
+  actions.appendChild(handoff);
+  handoff.addEventListener("click",async()=>{
+   const p=window.__roomV66ProductsById?.[ta.id];
+   const st=card.querySelector(".v66-ai-status");
+   if(!p){if(st)st.textContent="商品情報を取得できませんでした。";return}
+   const ok=await copyPlain(chatgptPrompt(p));
+   if(st)st.textContent=ok?"✅ 商品情報と依頼文をコピーしました。ChatGPTを開いて貼り付けて送信してください。":"コピーできませんでした。";
+   if(ok)window.open("https://chatgpt.com/","_blank","noopener");
+  });
   const note=el("div","v66-ai-pending","⚠️ 現在の本文は従来のテンプレート仮文です。AI生成後に内容を確認して投稿してください。");
   ta.before(note);
   const status=el("div","v66-ai-status");
